@@ -1,0 +1,6 @@
+pandas
+openpyxl
+nicegui
+requests
+cloudscraper
+beautifulsoup4
