@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Technical Department Dashboard</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- DataTables CSS for Search & Sorting -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
+    <style>
+        body { background-color: #0f172a; color: #f8fafc; font-family: sans-serif; }
+        .dataTables_wrapper { color: #94a3b8; font-size: 0.875rem; }
+        table.dataTable tbody tr { background-color: #1e293b; color: #f8fafc; border-bottom: 1px solid #334155; }
+        table.dataTable tbody tr:hover { background-color: #334155; }
+        table.dataTable header th { background-color: #0f172a; color: #60a5fa; }
+        .dataTables_wrapper .dataTables_length, .dataTables_wrapper .dataTables_filter, 
+        .dataTables_wrapper .dataTables_info, .dataTables_wrapper .dataTables_paginate { color: #94a3b8 !important; margin-bottom: 10px; }
+        input, select { background-color: #1e293b !important; color: #f8fafc !important; border: 1px solid #475569 !important; border-radius: 6px; padding: 4px 8px; }
+    </style>
+</head>
+<body class="p-6">
+    <div class="max-w-6xl mx-auto space-y-6">
+        <!-- Header -->
+        <header class="flex justify-between items-center bg-slate-800 p-6 rounded-xl border border-slate-700">
+            <div>
+                <h1 class="text-2xl font-bold text-blue-400">⚡ Technical Department Hub</h1>
+                <p class="text-xs text-slate-400">Live Attendance & Contest Performance (Read-Only)</p>
+            </div>
+        </header>
+
+        <!-- Navigation Tabs -->
+        <div class="flex gap-4 border-b border-slate-700 pb-2">
+            <button onclick="switchTab('roster')" id="tab-roster-btn" class="px-4 py-2 font-semibold text-blue-400 border-b-2 border-blue-400">Member Roster & Contests</button>
+            <button onclick="switchTab('meeting')" id="tab-meeting-btn" class="px-4 py-2 font-semibold text-slate-400 hover:text-slate-200">Meeting Attendance</button>
+        </div>
+
+        <!-- Tab 1: CP Members -->
+        <div id="tab-roster" class="bg-slate-800 p-6 rounded-xl border border-slate-700">
+            <h2 class="text-lg font-bold text-slate-200 mb-4">CP Member & Contest Roster</h2>
+            <div class="overflow-x-auto">
+                <table class="dataframe display responsive nowrap w-full text-sm text-slate-200">
+  <thead>
+    <tr style="text-align: right;">
+      <th>Name</th>
+      <th>Register number</th>
+      <th>Phone number</th>
+      <th>Username</th>
+      <th>Starters 246</th>
+      <th>Starters 247</th>
+      <th>Starters 252</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Ved Mewada</td>
+      <td>25BCE1969</td>
+      <td>9998667888</td>
+      <td>ved1969</td>
+      <td>3</td>
+      <td>0</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>Pratyaksh Rai</td>
+      <td>24BPS1071</td>
+      <td>8467095435</td>
+      <td>pratyakshrai01</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>Manan Singhal</td>
+      <td>25BCE1183</td>
+      <td>7357511041</td>
+      <td>Entity_404</td>
+      <td>4</td>
+      <td>0</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>MVN AVINASH NAIDU</td>
+      <td>25BLC1183</td>
+      <td>9177202100</td>
+      <td>Avinash95512</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>R. Lenin Fernandez</td>
+      <td>24BCE1009</td>
+      <td>7395927689</td>
+      <td>grand_glow_31</td>
+      <td>3</td>
+      <td>0</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>Manisha Bharadwaj</td>
+      <td>24BRS1126</td>
+      <td>7870068838</td>
+      <td>manisha_14star</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>Arkajyoti Banerjee</td>
+      <td>25BEE1216</td>
+      <td>8240087955</td>
+      <td>cheer_atom_78</td>
+      <td>0</td>
+      <td>0</td>
+      <td>4</td>
+    </tr>
+    <tr>
+      <td>Rupayan Roy</td>
+      <td>24BAI1229</td>
+      <td>7603913238</td>
+      <td>most_fury_06</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>Shriram</td>
+      <td>25BAI1619</td>
+      <td>9884464562</td>
+      <td>nooblypro</td>
+      <td>3</td>
+      <td>0</td>
+      <td>3</td>
+    </tr>
+    <tr>
+      <td>Lalam Yasaswi</td>
+      <td>24BAI1204</td>
+      <td>9030730696</td>
+      <td>scurry_feat_49</td>
+      <td>4</td>
+      <td>0</td>
+      <td>2</td>
+    </tr>
+    <tr>
+      <td>Aayush Talukdar</td>
+      <td>25BCE5826</td>
+      <td>6372111245</td>
+      <td>aayush_dev2101</td>
+      <td>3</td>
+      <td>4</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>Sudhiksha S</td>
+      <td>24BAI1313</td>
+      <td>7386723779</td>
+      <td>giddy_pine_36</td>
+      <td>3</td>
+      <td>3</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>Prabjot Singh</td>
+      <td>25BCE5163</td>
+      <td>7006933519</td>
+      <td>prabjot_singh</td>
+      <td>4</td>
+      <td>4</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>Akansha</td>
+      <td>25BCE5532</td>
+      <td>9935712711</td>
+      <td>gaze_98</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>Kishor Kumar A</td>
+      <td>25BCE5811</td>
+      <td>9003223034</td>
+      <td>kishorkumar007</td>
+      <td>0</td>
+      <td>4</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>Jyoti Yadav</td>
+      <td>24BAI1639</td>
+      <td>8950799910</td>
+      <td>jyotiyadav24</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>B Bhavana Deepthi</td>
+      <td>23BRS1170</td>
+      <td>9398172990</td>
+      <td>bhavana2023</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>Joal Yuhanon Thomas</td>
+      <td>25BEC1033</td>
+      <td>9895297289</td>
+      <td>joalyt</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>Kunj Patel</td>
+      <td>25BCE5591</td>
+      <td>9399234486</td>
+      <td>kunj_008</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>Vishnu Gonuguntla</td>
+      <td>25BCE5054</td>
+      <td>8390904936</td>
+      <td>mainvishnuhoon</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>K.G.Dharaneesh</td>
+      <td>25BCE5063</td>
+      <td>9025580044</td>
+      <td>headboy14</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>anurag rawat</td>
+      <td>25brs1128</td>
+      <td>8718946895</td>
+      <td>anuragggg</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>M Kavin Velan</td>
+      <td>25MID1016</td>
+      <td>7305542772</td>
+      <td>kavin2007</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>Rrishabh Sankaran</td>
+      <td>24BAI1071</td>
+      <td>9655635923</td>
+      <td>knot_treat_60</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>Nookala Kumari Akshara</td>
+      <td>25brs1111</td>
+      <td>6301777824</td>
+      <td>ind_akshara</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>Tanmay Suresh Kotadia</td>
+      <td>24BCE5281</td>
+      <td>956211707</td>
+      <td>tanmaykotadia</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>Siddharth Silori</td>
+      <td>25BAI1368</td>
+      <td>7017097553</td>
+      <td>Siddycodes_101</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>Shivsankar S</td>
+      <td>25BCE1735</td>
+      <td>8547224301</td>
+      <td>sshivsankar19</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>Ved Mewada</td>
+      <td>25BCE1969</td>
+      <td>9998667888</td>
+      <td>ved1969</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>Tanvi Nirmal</td>
+      <td>25BCE1336</td>
+      <td>6379553392</td>
+      <td>tan_v_25</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>Sudiksha Gupta</td>
+      <td>25BCE1824</td>
+      <td>7877984342</td>
+      <td>pure_seed_53</td>
+      <td>0</td>
+      <td>0</td>
+      <td>4</td>
+    </tr>
+    <tr>
+      <td>Abhishek R Iyengar</td>
+      <td>24MIA1042</td>
+      <td>8369179576</td>
+      <td>abhishek121206</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>Prince predeep</td>
+      <td>24MIS1007</td>
+      <td>8075327997</td>
+      <td>Prince predeep</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>HARITH S R</td>
+      <td>25BCE5179</td>
+      <td>9482712848</td>
+      <td>harithsr</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>Giridar V.G</td>
+      <td>25BCE5162</td>
+      <td>9500365662</td>
+      <td>giridar_2007</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>Aryan Jain</td>
+      <td>25bce1910</td>
+      <td>9840502912</td>
+      <td>aryanvjain20</td>
+      <td>4</td>
+      <td>3</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>U NAREN</td>
+      <td>25BDS1181</td>
+      <td>9884198689</td>
+      <td>naren_dev24k</td>
+      <td>4</td>
+      <td>1</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>Subham kumar behera</td>
+      <td>24BCE5322</td>
+      <td>7606996818</td>
+      <td>biswa_pra_05</td>
+      <td>4</td>
+      <td>4</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>Swati Prasad</td>
+      <td>25BCE5589</td>
+      <td>7013522537</td>
+      <td>swatiprasad_26</td>
+      <td>0</td>
+      <td>2</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>Sagnik Sen</td>
+      <td>24BCE5309</td>
+      <td>9734187783</td>
+      <td>sagnik_sen</td>
+      <td>0</td>
+      <td>4</td>
+      <td>5</td>
+    </tr>
+    <tr>
+      <td>Aswin Bharathi M J</td>
+      <td>24MIS1080</td>
+      <td>9361201097</td>
+      <td>calm_foxes_49</td>
+      <td>1</td>
+      <td>0</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>Joel Panjimaram Mathew</td>
+      <td>24BAI1426</td>
+      <td>9150943024</td>
+      <td>worm_luck_27</td>
+      <td>4</td>
+      <td>0</td>
+      <td>4</td>
+    </tr>
+    <tr>
+      <td>Sankari S</td>
+      <td>24MIS1079</td>
+      <td>8637447960</td>
+      <td>varsh_2025</td>
+      <td>3</td>
+      <td>0</td>
+      <td>2</td>
+    </tr>
+    <tr>
+      <td>Anandha Poorana Thraya S S</td>
+      <td>25BCE1143</td>
+      <td>9042769165</td>
+      <td>apt_code_1903</td>
+      <td>0</td>
+      <td>0</td>
+      <td>1</td>
+    </tr>
+  </tbody>
+</table>
+            </div>
+        </div>
+
+        <!-- Tab 2: Meetings -->
+        <div id="tab-meeting" class="bg-slate-800 p-6 rounded-xl border border-slate-700 hidden">
+            <h2 class="text-lg font-bold text-slate-200 mb-4">Meeting Attendance Logs</h2>
+            <div class="overflow-x-auto">
+                <p class='text-amber-400 p-4'>File not generated yet.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- DataTables & Tab Switching JS -->
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            $('table').DataTable({
+                responsive: true,
+                pageLength: 10,
+                lengthMenu: [10, 25, 50, 100]
+            });
+        });
+
+        function switchTab(tab) {
+            if (tab === 'roster') {
+                $('#tab-roster').removeClass('hidden');
+                $('#tab-meeting').addClass('hidden');
+                $('#tab-roster-btn').addClass('text-blue-400 border-b-2 border-blue-400').removeClass('text-slate-400');
+                $('#tab-meeting-btn').removeClass('text-blue-400 border-b-2 border-blue-400').addClass('text-slate-400');
+            } else {
+                $('#tab-meeting').removeClass('hidden');
+                $('#tab-roster').addClass('hidden');
+                $('#tab-meeting-btn').addClass('text-blue-400 border-b-2 border-blue-400').removeClass('text-slate-400');
+                $('#tab-roster-btn').removeClass('text-blue-400 border-b-2 border-blue-400').addClass('text-slate-400');
+            }
+        }
+    </script>
+</body>
+</html>
