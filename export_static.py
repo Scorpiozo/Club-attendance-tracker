@@ -7,82 +7,360 @@ from datetime import datetime
 
 import pandas as pd
 
+
+# ---------------------------------------------------------------------------
+# File configuration
+# ---------------------------------------------------------------------------
+
 CORE_EXCEL = "CP_Members.xlsx"
 FFCS_EXCEL = "FFCS_Members.xlsx"
-
-FFCS_ROSTER_FALLBACK = "cccp202627.xlsx"  # raw Google Form export, no attendance yet
+FFCS_ROSTER_FALLBACK = "cccp202627.xlsx"
 MEETING_EXCEL = "Meeting_Attendance.xlsx"
 
 TEMPLATE_FILE = "index_template.html"
 OUTPUT_HTML = "index.html"
 
-STARTER_COL_RE = re.compile(r"^Starters\s+(\d+)$")
+STARTER_COL_RE = re.compile(r"^Starters\s+(\d+)$", re.IGNORECASE)
 
 
-# --------------------------------------------------------------------------
-# Loading & standardizing
-# --------------------------------------------------------------------------
+# ---------------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------------
 
-def _starter_columns(df: pd.DataFrame) -> list[str]:
-    return [c for c in df.columns if STARTER_COL_RE.match(str(c))]
+def clean_text(value, default="N/A") -> str:
+    """Convert an Excel value into a clean display string."""
+    if value is None:
+        return default
+
+    try:
+        if pd.isna(value):
+            return default
+    except (TypeError, ValueError):
+        pass
+
+    text = str(value).strip()
+
+    if not text or text.lower() in {"nan", "none", "null"}:
+        return default
+
+    return text
 
 
-def _pick(df_row: pd.Series, *candidates, default="N/A"):
-    for c in candidates:
-        if c in df_row.index and pd.notna(df_row[c]) and str(df_row[c]).strip():
-            return df_row[c]
+def pick(row: pd.Series, *candidates, default="N/A"):
+    """Return the first non-empty value found among candidate column names."""
+    for column in candidates:
+        if column in row.index:
+            value = row[column]
+
+            try:
+                if pd.notna(value) and str(value).strip():
+                    return value
+            except (TypeError, ValueError):
+                pass
+
     return default
 
 
-def load_cohort(excel_file: str, member_type: str, fallback_roster: str | None = None) -> pd.DataFrame:
-    if os.path.exists(excel_file):
-        df = pd.read_excel(excel_file)
-    elif fallback_roster and os.path.exists(fallback_roster):
-        raw = pd.read_excel(fallback_roster)
-        cols = {str(c).lower(): c for c in raw.columns}
-        name_col = next((cols[k] for k in cols if "name" in k), None)
-        reg_col = next((cols[k] for k in cols if "reg" in k or "roll" in k), None)
-        user_col = next(
-            (cols[k] for k in cols if "codechef" in k or "username" in k or "handle" in k),
-            None,
+def starter_columns(df: pd.DataFrame) -> list[str]:
+    """
+    Return all columns matching:
+        Starters 1
+        Starters 2
+        Starters 3
+        ...
+    """
+    matches = []
+
+    for column in df.columns:
+        column_name = str(column).strip()
+
+        if STARTER_COL_RE.match(column_name):
+            matches.append(column_name)
+
+    # Sort numerically rather than alphabetically.
+    # This prevents Starters 10 appearing before Starters 2.
+    matches.sort(
+        key=lambda c: int(STARTER_COL_RE.match(c).group(1))
+    )
+
+    return matches
+
+
+def find_column(df: pd.DataFrame, keywords: list[str]):
+    """
+    Find a likely column using case-insensitive keyword matching.
+    """
+    normalized = {
+        str(column).strip().lower(): column
+        for column in df.columns
+    }
+
+    # First try exact keyword matches.
+    for keyword in keywords:
+        keyword_lower = keyword.lower()
+
+        if keyword_lower in normalized:
+            return normalized[keyword_lower]
+
+    # Then try partial matches.
+    for column_lower, original_column in normalized.items():
+        if any(keyword.lower() in column_lower for keyword in keywords):
+            return original_column
+
+    return None
+
+
+def clean_username(value) -> str:
+    """
+    Normalize a CodeChef username/URL.
+
+    Examples:
+        codechef.com/users/example -> example
+        https://www.codechef.com/users/example/ -> example
+        example -> example
+    """
+    text = clean_text(value)
+
+    if text == "N/A":
+        return text
+
+    text = text.strip().rstrip("/")
+
+    # If the value is a URL, keep only the final path component.
+    if "/" in text:
+        text = text.split("/")[-1]
+
+    return text
+
+
+def dataframe_to_records(df: pd.DataFrame) -> list[dict]:
+    """
+    Convert a DataFrame to JSON-safe records.
+    """
+    if df.empty:
+        return []
+
+    # Replace NaN/NaT with None before JSON conversion.
+    safe_df = df.copy()
+
+    safe_df = safe_df.where(pd.notna(safe_df), None)
+
+    return json.loads(
+        safe_df.to_json(
+            orient="records",
+            date_format="iso"
         )
+    )
+
+
+# ---------------------------------------------------------------------------
+# Loading cohort data
+# ---------------------------------------------------------------------------
+
+def load_cohort(
+    excel_file: str,
+    member_type: str,
+    fallback_roster: str | None = None,
+) -> pd.DataFrame:
+    """
+    Load a Core or FFCS Excel file.
+
+    If the main Excel file does not exist and a fallback roster is supplied,
+    the fallback roster is used to create a basic member list.
+    """
+
+    # -----------------------------------------------------------------------
+    # Load primary workbook
+    # -----------------------------------------------------------------------
+
+    if os.path.exists(excel_file):
+        try:
+            df = pd.read_excel(excel_file)
+        except Exception as exc:
+            print(f"⚠️ Could not read {excel_file}: {exc}")
+            return pd.DataFrame()
+
+    # -----------------------------------------------------------------------
+    # Load fallback roster
+    # -----------------------------------------------------------------------
+
+    elif fallback_roster and os.path.exists(fallback_roster):
+        try:
+            raw = pd.read_excel(fallback_roster)
+        except Exception as exc:
+            print(f"⚠️ Could not read fallback roster {fallback_roster}: {exc}")
+            return pd.DataFrame()
+
+        if raw.empty:
+            return pd.DataFrame()
+
+        name_col = find_column(
+            raw,
+            ["name", "student name", "full name"]
+        )
+
+        reg_col = find_column(
+            raw,
+            [
+                "registration number",
+                "register number",
+                "reg no",
+                "reg. no",
+                "roll number",
+                "roll no",
+                "register",
+            ]
+        )
+
+        user_col = find_column(
+            raw,
+            [
+                "codechef id",
+                "codechef username",
+                "codechef",
+                "username",
+                "handle",
+                "profile",
+            ]
+        )
+
         df = pd.DataFrame({
-            "Name": raw[name_col] if name_col else "N/A",
-            "Register number": raw[reg_col] if reg_col else "N/A",
-            "Username": (raw[user_col].astype(str).str.strip().str.rstrip("/").str.split("/").str[-1]
-                         if user_col else "N/A"),
+            "Name": (
+                raw[name_col]
+                if name_col is not None
+                else ["N/A"] * len(raw)
+            ),
+            "Register number": (
+                raw[reg_col]
+                if reg_col is not None
+                else ["N/A"] * len(raw)
+            ),
+            "Username": (
+                raw[user_col].apply(clean_username)
+                if user_col is not None
+                else ["N/A"] * len(raw)
+            ),
         })
+
     else:
+        print(f"ℹ️ {excel_file} not found.")
         return pd.DataFrame()
 
     if df.empty:
-        return df
+        return pd.DataFrame()
 
-    starter_cols = _starter_columns(df)
-    for c in starter_cols:
-        df[c] = pd.to_numeric(df[c], errors="coerce").fillna(0).astype(int)
+    # -----------------------------------------------------------------------
+    # Normalize column names
+    # -----------------------------------------------------------------------
+
+    df = df.copy()
+
+    # Strip accidental whitespace from Excel headers.
+    df.columns = [str(column).strip() for column in df.columns]
+
+    # -----------------------------------------------------------------------
+    # Detect contest columns
+    # -----------------------------------------------------------------------
+
+    starter_cols = starter_columns(df)
+
+    # Convert contest values to integers.
+    for column in starter_cols:
+        df[column] = pd.to_numeric(
+            df[column],
+            errors="coerce"
+        ).fillna(0)
+
+        df[column] = df[column].astype(int)
+
+    # -----------------------------------------------------------------------
+    # Build normalized records
+    # -----------------------------------------------------------------------
 
     records = []
+
     for _, row in df.iterrows():
-        name = _pick(row, "Name")
-        reg_no = _pick(row, "Registration Number", "Register number")
-        codechef_id = _pick(row, "CodeChef ID", "Username")
-        total_solved = int(sum(row[c] for c in starter_cols)) if starter_cols else 0
-        contests_participated = int(sum(1 for c in starter_cols if row[c] > 0)) if starter_cols else 0
-        attendance_rate = (
-            round(100 * contests_participated / len(starter_cols), 1) if starter_cols else 0.0
+
+        name = clean_text(
+            pick(
+                row,
+                "Name",
+                "Student Name",
+                "Full Name",
+                default="N/A",
+            )
         )
-        per_contest = {c: int(row[c]) for c in starter_cols}
+
+        reg_no = clean_text(
+            pick(
+                row,
+                "Registration Number",
+                "Register number",
+                "Register Number",
+                "Reg No",
+                "Reg. No",
+                "Roll Number",
+                "Roll No",
+                default="N/A",
+            )
+        )
+
+        codechef_id = clean_username(
+            pick(
+                row,
+                "CodeChef ID",
+                "CodeChef Username",
+                "Username",
+                "Handle",
+                default="N/A",
+            )
+        )
+
+        # Total problems solved across all tracked contests.
+        total_solved = sum(
+            int(row[column])
+            for column in starter_cols
+        )
+
+        # A contest counts as participated when at least one problem
+        # was solved in that contest.
+        contests_participated = sum(
+            1
+            for column in starter_cols
+            if int(row[column]) > 0
+        )
+
+        contests_tracked = len(starter_cols)
+
+        attendance_rate = (
+            round(
+                100 * contests_participated / contests_tracked,
+                1,
+            )
+            if contests_tracked
+            else 0.0
+        )
+
+        attendance_status = (
+            "Present"
+            if contests_participated > 0
+            else "Absent"
+        )
+
+        per_contest = {
+            column: int(row[column])
+            for column in starter_cols
+        }
 
         records.append({
-            "name": str(name),
-            "regNo": str(reg_no),
-            "codechefId": str(codechef_id),
+            "name": name,
+            "regNo": reg_no,
+            "codechefId": codechef_id,
             "memberType": member_type,
-            "attendanceStatus": "Present" if contests_participated > 0 else "Absent",
+            "attendanceStatus": attendance_status,
             "totalProblemsSolved": total_solved,
             "contestsParticipated": contests_participated,
-            "contestsTracked": len(starter_cols),
+            "contestsTracked": contests_tracked,
             "attendanceRate": attendance_rate,
             "perContest": per_contest,
         })
@@ -90,89 +368,279 @@ def load_cohort(excel_file: str, member_type: str, fallback_roster: str | None =
     return pd.DataFrame(records)
 
 
+# ---------------------------------------------------------------------------
+# Dataset generation
+# ---------------------------------------------------------------------------
+
 def build_dataset() -> dict:
-    core_df = load_cohort(CORE_EXCEL, "Core")
-    ffcs_df = load_cohort(FFCS_EXCEL, "FFCS", fallback_roster=FFCS_ROSTER_FALLBACK)
+    """
+    Build the complete dataset consumed by index_template.html.
+    """
 
-    all_df = pd.concat([core_df, ffcs_df], ignore_index=True) if not (core_df.empty and ffcs_df.empty) else pd.DataFrame()
+    print("📊 Loading member data...")
 
-    # Union of every "Starters N" contest tracked across both cohorts, sorted.
+    core_df = load_cohort(
+        CORE_EXCEL,
+        "Core",
+    )
+
+    ffcs_df = load_cohort(
+        FFCS_EXCEL,
+        "FFCS",
+        fallback_roster=FFCS_ROSTER_FALLBACK,
+    )
+
+    # -----------------------------------------------------------------------
+    # Combine cohorts
+    # -----------------------------------------------------------------------
+
+    frames = [
+        df
+        for df in (core_df, ffcs_df)
+        if not df.empty
+    ]
+
+    if frames:
+        all_df = pd.concat(
+            frames,
+            ignore_index=True,
+        )
+    else:
+        all_df = pd.DataFrame()
+
+    # -----------------------------------------------------------------------
+    # Determine all tracked contests
+    # -----------------------------------------------------------------------
+
     contest_numbers: set[int] = set()
+
     for df in (core_df, ffcs_df):
-        if df.empty:
+
+        if df.empty or "perContest" not in df.columns:
             continue
-        for rec in df["perContest"]:
-            for k in rec.keys():
-                m = STARTER_COL_RE.match(k)
-                if m:
-                    contest_numbers.add(int(m.group(1)))
+
+        for contest_data in df["perContest"]:
+
+            if not isinstance(contest_data, dict):
+                continue
+
+            for column in contest_data.keys():
+
+                match = STARTER_COL_RE.match(
+                    str(column).strip()
+                )
+
+                if match:
+                    contest_numbers.add(
+                        int(match.group(1))
+                    )
+
     contest_list = sorted(contest_numbers)
-    contest_labels = [f"Starters {n}" for n in contest_list]
 
-    # ---- KPIs -------------------------------------------------------
+    contest_labels = [
+        f"Starters {number}"
+        for number in contest_list
+    ]
+
+    # -----------------------------------------------------------------------
+    # KPI calculations
+    # -----------------------------------------------------------------------
+
     total_members = len(all_df)
-    total_active_solvers = int((all_df["totalProblemsSolved"] > 0).sum()) if not all_df.empty else 0
 
-    ffcs_count = len(ffcs_df)
-    ffcs_active = int((ffcs_df["attendanceStatus"] == "Present").sum()) if not ffcs_df.empty else 0
-    ffcs_turnout_rate = round(100 * ffcs_active / ffcs_count, 1) if ffcs_count else 0.0
+    if not all_df.empty:
+        total_active_solvers = int(
+            (
+                all_df["totalProblemsSolved"] > 0
+            ).sum()
+        )
+    else:
+        total_active_solvers = 0
 
     core_count = len(core_df)
-    core_active = int((core_df["attendanceStatus"] == "Present").sum()) if not core_df.empty else 0
-    core_turnout_rate = round(100 * core_active / core_count, 1) if core_count else 0.0
+
+    if not core_df.empty:
+        core_active = int(
+            (
+                core_df["attendanceStatus"] == "Present"
+            ).sum()
+        )
+    else:
+        core_active = 0
+
+    core_turnout_rate = (
+        round(
+            100 * core_active / core_count,
+            1,
+        )
+        if core_count
+        else 0.0
+    )
+
+    ffcs_count = len(ffcs_df)
+
+    if not ffcs_df.empty:
+        ffcs_active = int(
+            (
+                ffcs_df["attendanceStatus"] == "Present"
+            ).sum()
+        )
+    else:
+        ffcs_active = 0
+
+    ffcs_turnout_rate = (
+        round(
+            100 * ffcs_active / ffcs_count,
+            1,
+        )
+        if ffcs_count
+        else 0.0
+    )
+
+    # -----------------------------------------------------------------------
+    # Top performer for each contest
+    # -----------------------------------------------------------------------
 
     top_performers = {}
+
     for label in contest_labels:
+
         if all_df.empty:
             continue
-        col_vals = all_df["perContest"].apply(lambda d: d.get(label, 0))
-        max_val = col_vals.max() if len(col_vals) else 0
-        if max_val > 0:
-            best_idx = col_vals.idxmax()
-            top_performers[label] = {
-                "name": all_df.loc[best_idx, "name"],
-                "memberType": all_df.loc[best_idx, "memberType"],
-                "solved": int(col_vals.max()),
-            }
+
+        values = all_df["perContest"].apply(
+            lambda data: int(data.get(label, 0))
+            if isinstance(data, dict)
+            else 0
+        )
+
+        if values.empty:
+            continue
+
+        max_value = int(values.max())
+
+        if max_value <= 0:
+            continue
+
+        best_index = values.idxmax()
+
+        top_performers[label] = {
+            "name": str(
+                all_df.loc[best_index, "name"]
+            ),
+            "memberType": str(
+                all_df.loc[best_index, "memberType"]
+            ),
+            "solved": max_value,
+        }
+
+    # -----------------------------------------------------------------------
+    # Overall top performer
+    # -----------------------------------------------------------------------
 
     overall_top_performer = None
-    if not all_df.empty and all_df["totalProblemsSolved"].max() > 0:
-        idx = all_df["totalProblemsSolved"].idxmax()
+
+    if (
+        not all_df.empty
+        and all_df["totalProblemsSolved"].max() > 0
+    ):
+        best_index = all_df[
+            "totalProblemsSolved"
+        ].idxmax()
+
         overall_top_performer = {
-            "name": all_df.loc[idx, "name"],
-            "memberType": all_df.loc[idx, "memberType"],
-            "solved": int(all_df.loc[idx, "totalProblemsSolved"]),
+            "name": str(
+                all_df.loc[best_index, "name"]
+            ),
+            "memberType": str(
+                all_df.loc[best_index, "memberType"]
+            ),
+            "solved": int(
+                all_df.loc[
+                    best_index,
+                    "totalProblemsSolved"
+                ]
+            ),
         }
+
+    # -----------------------------------------------------------------------
+    # KPI object
+    # -----------------------------------------------------------------------
 
     kpis = {
         "totalMembers": total_members,
         "totalActiveSolvers": total_active_solvers,
+
         "coreCount": core_count,
         "coreTurnoutRate": core_turnout_rate,
+
         "ffcsCount": ffcs_count,
         "ffcsTurnoutRate": ffcs_turnout_rate,
+
         "contestsTracked": len(contest_list),
+
         "overallTopPerformer": overall_top_performer,
+
         "topPerformersByContest": top_performers,
     }
 
-    members = json.loads(all_df.to_json(orient="records")) if not all_df.empty else []
+    # -----------------------------------------------------------------------
+    # Member records
+    # -----------------------------------------------------------------------
 
-    # Meeting attendance (kept from the legacy dashboard, if present).
+    members = dataframe_to_records(all_df)
+
+    # -----------------------------------------------------------------------
+    # Meeting attendance
+    # -----------------------------------------------------------------------
+
     meeting_records = []
     meeting_columns: list[str] = []
+
     if os.path.exists(MEETING_EXCEL):
-        m_df = pd.read_excel(MEETING_EXCEL)
-        if not m_df.empty:
-            meeting_columns = list(m_df.columns)
-            meeting_records = json.loads(m_df.to_json(orient="records"))
+
+        try:
+            meeting_df = pd.read_excel(MEETING_EXCEL)
+
+            if not meeting_df.empty:
+
+                meeting_df = meeting_df.copy()
+
+                meeting_df.columns = [
+                    str(column).strip()
+                    for column in meeting_df.columns
+                ]
+
+                meeting_columns = list(
+                    meeting_df.columns
+                )
+
+                meeting_records = dataframe_to_records(
+                    meeting_df
+                )
+
+        except Exception as exc:
+            print(
+                f"⚠️ Could not read {MEETING_EXCEL}: {exc}"
+            )
+
+    # -----------------------------------------------------------------------
+    # Final dataset
+    # -----------------------------------------------------------------------
 
     return {
-        "generatedAt": datetime.now().isoformat(timespec="seconds"),
+        "generatedAt": datetime.now().isoformat(
+            timespec="seconds"
+        ),
+
         "contestList": contest_list,
+
         "contestLabels": contest_labels,
+
         "kpis": kpis,
+
         "members": members,
+
         "meeting": {
             "columns": meeting_columns,
             "records": meeting_records,
@@ -180,43 +648,99 @@ def build_dataset() -> dict:
     }
 
 
-# --------------------------------------------------------------------------
+# ---------------------------------------------------------------------------
 # HTML compilation
-# --------------------------------------------------------------------------
+# ---------------------------------------------------------------------------
 
 def compile_html(dataset: dict) -> str:
+    """
+    Inject DASHBOARD_DATA into index_template.html.
+    """
+
     if not os.path.exists(TEMPLATE_FILE):
         raise FileNotFoundError(
-            f"{TEMPLATE_FILE} not found. Keep index_template.html next to export_static.py; "
-            f"it is the static UI shell that this script injects data into."
+            f"{TEMPLATE_FILE} not found. "
+            "Keep index_template.html in the same folder "
+            "as export_static.py."
         )
 
-    with open(TEMPLATE_FILE, "r", encoding="utf-8") as f:
-        template = f.read()
+    with open(
+        TEMPLATE_FILE,
+        "r",
+        encoding="utf-8",
+    ) as file:
+        template = file.read()
 
-    payload_json = json.dumps(dataset, ensure_ascii=False)
-    # Embed as a JSON literal inside a <script> tag so the page has zero
-    # runtime network dependency for its data.
-    injected = template.replace(
-        "/*__DASHBOARD_DATA__*/",
-        f"const DASHBOARD_DATA = {payload_json};",
+    marker = "/*__DASHBOARD_DATA__*/"
+
+    if marker not in template:
+        raise ValueError(
+            "Could not find the DASHBOARD_DATA placeholder "
+            "in index_template.html.\n\n"
+            "The template must contain exactly:\n\n"
+            "/*__DASHBOARD_DATA__*/"
+        )
+
+    payload_json = json.dumps(
+        dataset,
+        ensure_ascii=False,
+        separators=(",", ":"),
     )
+
+    injected = template.replace(
+        marker,
+        f"const DASHBOARD_DATA = {payload_json};",
+        1,
+    )
+
     return injected
 
 
+# ---------------------------------------------------------------------------
+# Main
+# ---------------------------------------------------------------------------
+
 def main():
+    print("=" * 60)
+    print("CodeChef Contest Tracking Hub - Static Export")
+    print("=" * 60)
+
     dataset = build_dataset()
+
     html = compile_html(dataset)
 
-    with open(OUTPUT_HTML, "w", encoding="utf-8") as f:
-        f.write(html)
+    with open(
+        OUTPUT_HTML,
+        "w",
+        encoding="utf-8",
+    ) as file:
+        file.write(html)
 
-    print(f"✅ Generated static dashboard at '{OUTPUT_HTML}'")
-    print(f"   Core members:  {dataset['kpis']['coreCount']}")
-    print(f"   FFCS members:  {dataset['kpis']['ffcsCount']}")
-    print(f"   Contests tracked: {dataset['kpis']['contestsTracked']}")
-    print(f"   Total active solvers: {dataset['kpis']['totalActiveSolvers']}")
+    kpis = dataset["kpis"]
+
+    print()
+    print(f"✅ Generated: {OUTPUT_HTML}")
+    print(f"   Core members:       {kpis['coreCount']}")
+    print(f"   FFCS members:       {kpis['ffcsCount']}")
+    print(f"   Contests tracked:   {kpis['contestsTracked']}")
+    print(
+        f"   Active solvers:     "
+        f"{kpis['totalActiveSolvers']}"
+    )
+
+    if dataset["meeting"]["records"]:
+        print(
+            f"   Meeting records:    "
+            f"{len(dataset['meeting']['records'])}"
+        )
+    else:
+        print("   Meeting records:    0")
+
+    print()
+    print("🎉 Static dashboard ready.")
+    print("=" * 60)
 
 
 if __name__ == "__main__":
     main()
+

@@ -1,311 +1,1282 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CodeChef Contest Tracking Hub</title>
-<style>
-  :root{
-    --bg:#0f172a; --panel:#1e293b; --panel-2:#16213a; --border:#2c3b57;
-    --text:#f1f5f9; --muted:#94a3b8; --blue:#60a5fa; --green:#34d399;
-    --purple:#c084fc; --amber:#fbbf24; --red:#f87171;
-  }
-  *{box-sizing:border-box}
-  body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;}
-  .wrap{max-width:1200px;margin:0 auto;padding:24px 16px 60px}
-  header.top{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;
-    background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:20px 24px;margin-bottom:20px}
-  header.top h1{margin:0;font-size:1.4rem;color:var(--blue)}
-  header.top p{margin:4px 0 0;font-size:.8rem;color:var(--muted)}
-  .badge{font-size:.7rem;color:var(--muted);background:var(--panel-2);border:1px solid var(--border);
-    padding:4px 10px;border-radius:999px}
+    <meta charset="UTF-8">
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
 
-  .kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px;margin-bottom:22px}
-  .kpi-card{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:16px 18px}
-  .kpi-card .label{font-size:.7rem;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);font-weight:600}
-  .kpi-card .value{font-size:1.8rem;font-weight:800;margin-top:6px}
-  .kpi-card .sub{font-size:.72rem;color:var(--muted);margin-top:4px}
-  .kpi-blue .value{color:var(--blue)} .kpi-green .value{color:var(--green)}
-  .kpi-purple .value{color:var(--purple)} .kpi-amber .value{color:var(--amber)}
+    <title>CodeChef Contest Tracking Hub</title>
 
-  .tabs{display:flex;gap:6px;border-bottom:1px solid var(--border);margin-bottom:16px;flex-wrap:wrap}
-  .tabs button{background:none;border:none;color:var(--muted);font-weight:600;font-size:.9rem;
-    padding:10px 16px;cursor:pointer;border-bottom:2px solid transparent}
-  .tabs button.active{color:var(--blue);border-bottom-color:var(--blue)}
-  .tabs button:hover{color:var(--text)}
+    <style>
+        :root {
+            --bg: #0f172a;
+            --panel: #1e293b;
+            --panel-2: #16213a;
+            --border: #2c3b57;
 
-  .panel{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:18px 20px;margin-bottom:20px}
-  .panel h2{margin:0 0 14px;font-size:1rem;color:var(--text)}
+            --text: #f1f5f9;
+            --muted: #94a3b8;
 
-  .controls{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;align-items:center}
-  .controls input[type=text]{flex:1;min-width:200px;background:var(--panel-2);border:1px solid var(--border);
-    color:var(--text);border-radius:8px;padding:9px 12px;font-size:.85rem}
-  .controls select{background:var(--panel-2);border:1px solid var(--border);color:var(--text);
-    border-radius:8px;padding:9px 12px;font-size:.85rem}
-  .controls .count{font-size:.75rem;color:var(--muted);white-space:nowrap}
+            --blue: #60a5fa;
+            --green: #34d399;
+            --purple: #c084fc;
+            --amber: #fbbf24;
+            --red: #f87171;
+        }
 
-  table{width:100%;border-collapse:collapse;font-size:.83rem}
-  thead th{position:sticky;top:0;background:var(--panel-2);color:var(--blue);text-align:left;
-    padding:10px 12px;border-bottom:1px solid var(--border);cursor:pointer;user-select:none;white-space:nowrap}
-  thead th:hover{color:var(--text)}
-  thead th .arrow{font-size:.7rem;opacity:.6;margin-left:4px}
-  tbody td{padding:9px 12px;border-bottom:1px solid var(--border);white-space:nowrap}
-  tbody tr:hover{background:var(--panel-2)}
-  .table-scroll{overflow-x:auto;max-height:560px;overflow-y:auto;border-radius:8px}
+        * {
+            box-sizing: border-box;
+        }
 
-  .pill{display:inline-block;padding:2px 9px;border-radius:999px;font-size:.7rem;font-weight:700}
-  .pill-core{background:rgba(96,165,250,.15);color:var(--blue)}
-  .pill-ffcs{background:rgba(192,132,252,.15);color:var(--purple)}
-  .pill-present{background:rgba(52,211,153,.15);color:var(--green)}
-  .pill-absent{background:rgba(248,113,113,.15);color:var(--red)}
+        body {
+            margin: 0;
+            background: var(--bg);
+            color: var(--text);
+            font-family:
+                -apple-system,
+                BlinkMacSystemFont,
+                "Segoe UI",
+                Roboto,
+                Helvetica,
+                Arial,
+                sans-serif;
+        }
 
-  .empty{padding:30px;text-align:center;color:var(--muted);font-size:.85rem}
-  footer{text-align:center;color:var(--muted);font-size:.72rem;margin-top:20px}
-  @media (max-width:640px){ .kpi-card .value{font-size:1.4rem} }
-</style>
+        .wrap {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 24px 16px 60px;
+        }
+
+        header.top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+
+            padding: 20px 24px;
+            margin-bottom: 20px;
+        }
+
+        header.top h1 {
+            margin: 0;
+            font-size: 1.4rem;
+            color: var(--blue);
+        }
+
+        header.top p {
+            margin: 4px 0 0;
+            font-size: 0.8rem;
+            color: var(--muted);
+        }
+
+        .badge {
+            font-size: 0.7rem;
+            color: var(--muted);
+
+            background: var(--panel-2);
+            border: 1px solid var(--border);
+
+            padding: 4px 10px;
+            border-radius: 999px;
+        }
+
+        /* ------------------------------------------------------------------
+           KPI cards
+        ------------------------------------------------------------------ */
+
+        .kpi-grid {
+            display: grid;
+            grid-template-columns:
+                repeat(auto-fit, minmax(190px, 1fr));
+
+            gap: 14px;
+            margin-bottom: 22px;
+        }
+
+        .kpi-card {
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+
+            padding: 16px 18px;
+        }
+
+        .kpi-card .label {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            color: var(--muted);
+            font-weight: 600;
+        }
+
+        .kpi-card .value {
+            font-size: 1.8rem;
+            font-weight: 800;
+            margin-top: 6px;
+
+            overflow-wrap: anywhere;
+        }
+
+        .kpi-card .sub {
+            font-size: 0.72rem;
+            color: var(--muted);
+            margin-top: 4px;
+
+            line-height: 1.4;
+        }
+
+        .kpi-blue .value {
+            color: var(--blue);
+        }
+
+        .kpi-green .value {
+            color: var(--green);
+        }
+
+        .kpi-purple .value {
+            color: var(--purple);
+        }
+
+        .kpi-amber .value {
+            color: var(--amber);
+        }
+
+        /* ------------------------------------------------------------------
+           Cohort tabs
+        ------------------------------------------------------------------ */
+
+        .tabs {
+            display: flex;
+            gap: 6px;
+
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 16px;
+
+            flex-wrap: wrap;
+        }
+
+        .tabs button {
+            background: none;
+            border: none;
+
+            color: var(--muted);
+            font-weight: 600;
+            font-size: 0.9rem;
+
+            padding: 10px 16px;
+
+            cursor: pointer;
+
+            border-bottom: 2px solid transparent;
+        }
+
+        .tabs button.active {
+            color: var(--blue);
+            border-bottom-color: var(--blue);
+        }
+
+        .tabs button:hover {
+            color: var(--text);
+        }
+
+        /* ------------------------------------------------------------------
+           Panels
+        ------------------------------------------------------------------ */
+
+        .panel {
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+
+            padding: 18px 20px;
+            margin-bottom: 20px;
+        }
+
+        .panel h2 {
+            margin: 0 0 14px;
+            font-size: 1rem;
+            color: var(--text);
+        }
+
+        /* ------------------------------------------------------------------
+           Controls
+        ------------------------------------------------------------------ */
+
+        .controls {
+            display: flex;
+            gap: 10px;
+
+            flex-wrap: wrap;
+            margin-bottom: 14px;
+
+            align-items: center;
+        }
+
+        .controls input[type="text"] {
+            flex: 1;
+            min-width: 200px;
+
+            background: var(--panel-2);
+            border: 1px solid var(--border);
+
+            color: var(--text);
+
+            border-radius: 8px;
+
+            padding: 9px 12px;
+
+            font-size: 0.85rem;
+        }
+
+        .controls input[type="text"]::placeholder {
+            color: var(--muted);
+        }
+
+        .controls input[type="text"]:focus,
+        .controls select:focus {
+            outline: none;
+            border-color: var(--blue);
+            box-shadow: 0 0 0 2px rgba(96, 165, 250, 0.15);
+        }
+
+        .controls select {
+            background: var(--panel-2);
+            border: 1px solid var(--border);
+
+            color: var(--text);
+
+            border-radius: 8px;
+
+            padding: 9px 12px;
+
+            font-size: 0.85rem;
+        }
+
+        .controls .count {
+            font-size: 0.75rem;
+            color: var(--muted);
+            white-space: nowrap;
+        }
+
+        /* ------------------------------------------------------------------
+           Tables
+        ------------------------------------------------------------------ */
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.83rem;
+        }
+
+        thead th {
+            position: sticky;
+            top: 0;
+
+            background: var(--panel-2);
+            color: var(--blue);
+
+            text-align: left;
+
+            padding: 10px 12px;
+
+            border-bottom: 1px solid var(--border);
+
+            user-select: none;
+            white-space: nowrap;
+        }
+
+        thead th[data-key] {
+            cursor: pointer;
+        }
+
+        thead th[data-key]:hover {
+            color: var(--text);
+        }
+
+        thead th .arrow {
+            font-size: 0.7rem;
+            opacity: 0.6;
+            margin-left: 4px;
+        }
+
+        tbody td {
+            padding: 9px 12px;
+            border-bottom: 1px solid var(--border);
+            white-space: nowrap;
+        }
+
+        tbody tr:hover {
+            background: var(--panel-2);
+        }
+
+        .table-scroll {
+            overflow-x: auto;
+            max-height: 560px;
+            overflow-y: auto;
+
+            border-radius: 8px;
+        }
+
+        /* ------------------------------------------------------------------
+           Pills
+        ------------------------------------------------------------------ */
+
+        .pill {
+            display: inline-block;
+
+            padding: 2px 9px;
+
+            border-radius: 999px;
+
+            font-size: 0.7rem;
+            font-weight: 700;
+        }
+
+        .pill-core {
+            background: rgba(96, 165, 250, 0.15);
+            color: var(--blue);
+        }
+
+        .pill-ffcs {
+            background: rgba(192, 132, 252, 0.15);
+            color: var(--purple);
+        }
+
+        .pill-present {
+            background: rgba(52, 211, 153, 0.15);
+            color: var(--green);
+        }
+
+        .pill-absent {
+            background: rgba(248, 113, 113, 0.15);
+            color: var(--red);
+        }
+
+        /* ------------------------------------------------------------------
+           Empty states / footer
+        ------------------------------------------------------------------ */
+
+        .empty {
+            padding: 30px;
+
+            text-align: center;
+
+            color: var(--muted);
+
+            font-size: 0.85rem;
+        }
+
+        footer {
+            text-align: center;
+
+            color: var(--muted);
+
+            font-size: 0.72rem;
+
+            margin-top: 20px;
+        }
+
+        /* ------------------------------------------------------------------
+           Mobile
+        ------------------------------------------------------------------ */
+
+        @media (max-width: 640px) {
+            .wrap {
+                padding: 14px 10px 40px;
+            }
+
+            header.top {
+                padding: 16px;
+            }
+
+            header.top h1 {
+                font-size: 1.15rem;
+            }
+
+            .kpi-card .value {
+                font-size: 1.4rem;
+            }
+
+            .panel {
+                padding: 14px;
+            }
+
+            .controls input[type="text"] {
+                min-width: 100%;
+            }
+
+            .controls select {
+                width: 100%;
+            }
+        }
+    </style>
 </head>
+
 <body>
+
 <div class="wrap">
 
-  <header class="top">
-    <div>
-      <h1>⚡ CodeChef Contest Tracking Hub</h1>
-      <p>Core CP &amp; FFCS attendance / performance dashboard — read-only, generated statically</p>
+    <!-- ================================================================
+         Header
+    ================================================================= -->
+
+    <header class="top">
+        <div>
+            <h1>⚡ CodeChef Contest Tracking Hub</h1>
+
+            <p>
+                Core CP &amp; FFCS attendance / performance dashboard
+                — read-only, generated statically
+            </p>
+        </div>
+
+        <span
+            class="badge"
+            id="generatedBadge"
+        >
+            —
+        </span>
+    </header>
+
+
+    <!-- ================================================================
+         KPI cards
+    ================================================================= -->
+
+    <div
+        class="kpi-grid"
+        id="kpiGrid"
+    ></div>
+
+
+    <!-- ================================================================
+         Cohort tabs
+    ================================================================= -->
+
+    <div
+        class="tabs"
+        id="cohortTabs"
+    >
+        <button
+            data-cohort="All"
+            class="active"
+        >
+            All Members
+        </button>
+
+        <button data-cohort="Core">
+            Core CP
+        </button>
+
+        <button data-cohort="FFCS">
+            FFCS Members
+        </button>
     </div>
-    <span class="badge" id="generatedBadge">—</span>
-  </header>
 
-  <div class="kpi-grid" id="kpiGrid"></div>
 
-  <div class="tabs" id="cohortTabs">
-    <button data-cohort="All" class="active">All Members</button>
-    <button data-cohort="Core">Core CP</button>
-    <button data-cohort="FFCS">FFCS Members</button>
-  </div>
+    <!-- ================================================================
+         Member roster
+    ================================================================= -->
 
-  <div class="panel">
-    <h2>Member Roster &amp; Contest Performance</h2>
-    <div class="controls">
-      <input type="text" id="searchInput" placeholder="Search by name or registration number…">
-      <select id="sortSelect">
-        <option value="totalProblemsSolved_desc">Sort: Problems solved (high→low)</option>
-        <option value="totalProblemsSolved_asc">Sort: Problems solved (low→high)</option>
-        <option value="contestsParticipated_desc">Sort: Contests participated (high→low)</option>
-        <option value="attendanceRate_desc">Sort: Attendance rate (high→low)</option>
-        <option value="name_asc">Sort: Name (A→Z)</option>
-      </select>
-      <span class="count" id="rowCount"></span>
+    <div class="panel">
+
+        <h2>
+            Member Roster &amp; Contest Performance
+        </h2>
+
+        <div class="controls">
+
+            <input
+                type="text"
+                id="searchInput"
+                placeholder="Search by name, registration number, or CodeChef ID…"
+                autocomplete="off"
+            >
+
+            <select id="sortSelect">
+
+                <option value="totalProblemsSolved_desc">
+                    Sort: Problems solved (high→low)
+                </option>
+
+                <option value="totalProblemsSolved_asc">
+                    Sort: Problems solved (low→high)
+                </option>
+
+                <option value="contestsParticipated_desc">
+                    Sort: Contests participated (high→low)
+                </option>
+
+                <option value="attendanceRate_desc">
+                    Sort: Attendance rate (high→low)
+                </option>
+
+                <option value="name_asc">
+                    Sort: Name (A→Z)
+                </option>
+
+            </select>
+
+            <span
+                class="count"
+                id="rowCount"
+            ></span>
+
+        </div>
+
+
+        <div class="table-scroll">
+
+            <table id="rosterTable">
+
+                <thead id="rosterHead"></thead>
+
+                <tbody id="rosterBody"></tbody>
+
+            </table>
+
+            <div
+                class="empty"
+                id="rosterEmpty"
+                style="display: none;"
+            >
+                No members match your search/filter.
+            </div>
+
+        </div>
+
     </div>
-    <div class="table-scroll">
-      <table id="rosterTable">
-        <thead id="rosterHead"></thead>
-        <tbody id="rosterBody"></tbody>
-      </table>
-      <div class="empty" id="rosterEmpty" style="display:none">No members match your search/filter.</div>
-    </div>
-  </div>
 
-  <div class="panel" id="meetingPanel" style="display:none">
-    <h2>Meeting Attendance Logs</h2>
-    <div class="table-scroll">
-      <table id="meetingTable">
-        <thead id="meetingHead"></thead>
-        <tbody id="meetingBody"></tbody>
-      </table>
-    </div>
-  </div>
 
-  <footer>Generated by export_static.py · No runtime API calls · Safe for GitHub Pages</footer>
+    <!-- ================================================================
+         Meeting attendance
+    ================================================================= -->
+
+    <div
+        class="panel"
+        id="meetingPanel"
+        style="display: none;"
+    >
+
+        <h2>
+            Meeting Attendance Logs
+        </h2>
+
+        <div class="table-scroll">
+
+            <table id="meetingTable">
+
+                <thead id="meetingHead"></thead>
+
+                <tbody id="meetingBody"></tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
+
+    <footer>
+        Generated by export_static.py ·
+        No runtime API calls ·
+        Safe for GitHub Pages
+    </footer>
+
 </div>
 
+
 <script>
+
 /*__DASHBOARD_DATA__*/
-// If export_static.py hasn't injected real data yet, fall back to an empty
-// shell so the template still renders standalone for design review.
-if (typeof DASHBOARD_DATA === 'undefined') {
-  var DASHBOARD_DATA = { generatedAt:'', contestList:[], contestLabels:[], kpis:{}, members:[], meeting:{columns:[],records:[]} };
-}
+
+
+/* -----------------------------------------------------------------------
+   Application state
+------------------------------------------------------------------------ */
 
 const state = {
-  cohort: 'All',
-  search: '',
-  sortKey: 'totalProblemsSolved',
-  sortDir: 'desc',
+    cohort: "All",
+    search: "",
+    sortKey: "totalProblemsSolved",
+    sortDir: "desc"
 };
 
-function fmtPct(n){ return (n===undefined||n===null) ? '—' : n + '%'; }
 
-function renderKpis(){
-  const k = DASHBOARD_DATA.kpis || {};
-  const top = k.overallTopPerformer;
-  const cards = [
-    { cls:'kpi-blue',   label:'Total Members',        value: k.totalMembers ?? 0,
-      sub: `${k.coreCount ?? 0} Core · ${k.ffcsCount ?? 0} FFCS` },
-    { cls:'kpi-green',  label:'Total Active Solvers',  value: k.totalActiveSolvers ?? 0,
-      sub: 'Members with ≥1 problem solved' },
-    { cls:'kpi-purple', label:'FFCS Turnout Rate',     value: fmtPct(k.ffcsTurnoutRate),
-      sub: `${k.ffcsCount ?? 0} FFCS students tracked` },
-    { cls:'kpi-amber',  label:'Core Turnout Rate',     value: fmtPct(k.coreTurnoutRate),
-      sub: `${k.coreCount ?? 0} Core members tracked` },
-    { cls:'kpi-blue',   label:'Contests Tracked',      value: k.contestsTracked ?? 0,
-      sub: (DASHBOARD_DATA.contestLabels || []).join(', ') || 'No contests yet' },
-    { cls:'kpi-green',  label:'Top Performer',         value: top ? top.name : '—',
-      sub: top ? `${top.solved} problems · ${top.memberType}` : 'No submissions yet' },
-  ];
-  document.getElementById('kpiGrid').innerHTML = cards.map(c => `
-    <div class="kpi-card ${c.cls}">
-      <div class="label">${c.label}</div>
-      <div class="value">${c.value}</div>
-      <div class="sub">${c.sub}</div>
-    </div>
-  `).join('');
+/* -----------------------------------------------------------------------
+   Utility functions
+------------------------------------------------------------------------ */
+
+function escapeHtml(value) {
+
+    if (value === null || value === undefined) {
+        return "";
+    }
+
+    return String(value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
 }
 
-function contestCols(){ return DASHBOARD_DATA.contestLabels || []; }
 
-function renderRosterHead(){
-  const cols = contestCols();
-  const headers = [
-    ['name','Name'], ['regNo','Reg. No'], ['codechefId','CodeChef ID'],
-    ['memberType','Type'], ['attendanceStatus','Status'],
-    ['contestsParticipated','Contests'], ['totalProblemsSolved','Problems Solved'],
-    ['attendanceRate','Attendance %'],
-  ];
-  let html = '<tr>';
-  headers.forEach(([key,label]) => {
-    const arrow = state.sortKey === key ? (state.sortDir==='asc'?'▲':'▼') : '';
-    html += `<th data-key="${key}">${label}<span class="arrow">${arrow}</span></th>`;
-  });
-  cols.forEach(c => html += `<th>${c}</th>`);
-  html += '</tr>';
-  document.getElementById('rosterHead').innerHTML = html;
+function fmtPct(value) {
 
-  document.querySelectorAll('#rosterHead th[data-key]').forEach(th => {
-    th.addEventListener('click', () => {
-      const key = th.dataset.key;
-      if (state.sortKey === key) {
-        state.sortDir = state.sortDir === 'asc' ? 'desc' : 'asc';
-      } else {
-        state.sortKey = key;
-        state.sortDir = ['name','memberType','attendanceStatus','codechefId','regNo'].includes(key) ? 'asc' : 'desc';
-      }
-      syncSortSelect();
-      renderRosterHead();
-      renderRosterBody();
+    if (value === undefined || value === null || value === "") {
+        return "—";
+    }
+
+    return `${value}%`;
+}
+
+
+function getContestColumns() {
+    return DASHBOARD_DATA.contestLabels || [];
+}
+
+
+/* -----------------------------------------------------------------------
+   KPI rendering
+------------------------------------------------------------------------ */
+
+function renderKpis() {
+
+    const k = DASHBOARD_DATA.kpis || {};
+    const top = k.overallTopPerformer;
+
+    const cards = [
+
+        {
+            cls: "kpi-blue",
+            label: "Total Members",
+            value: k.totalMembers ?? 0,
+            sub: `${k.coreCount ?? 0} Core · ${k.ffcsCount ?? 0} FFCS`
+        },
+
+        {
+            cls: "kpi-green",
+            label: "Total Active Solvers",
+            value: k.totalActiveSolvers ?? 0,
+            sub: "Members with ≥1 problem solved"
+        },
+
+        {
+            cls: "kpi-purple",
+            label: "FFCS Turnout Rate",
+            value: fmtPct(k.ffcsTurnoutRate),
+            sub: `${k.ffcsCount ?? 0} FFCS students tracked`
+        },
+
+        {
+            cls: "kpi-amber",
+            label: "Core Turnout Rate",
+            value: fmtPct(k.coreTurnoutRate),
+            sub: `${k.coreCount ?? 0} Core members tracked`
+        },
+
+        {
+            cls: "kpi-blue",
+            label: "Contests Tracked",
+            value: k.contestsTracked ?? 0,
+            sub:
+                (DASHBOARD_DATA.contestLabels || []).join(", ")
+                || "No contests yet"
+        },
+
+        {
+            cls: "kpi-green",
+            label: "Top Performer",
+            value: top ? top.name : "—",
+            sub:
+                top
+                    ? `${top.solved} problems · ${top.memberType}`
+                    : "No submissions yet"
+        }
+
+    ];
+
+
+    document.getElementById("kpiGrid").innerHTML =
+        cards.map(card => `
+
+            <div class="kpi-card ${card.cls}">
+
+                <div class="label">
+                    ${escapeHtml(card.label)}
+                </div>
+
+                <div class="value">
+                    ${escapeHtml(card.value)}
+                </div>
+
+                <div class="sub">
+                    ${escapeHtml(card.sub)}
+                </div>
+
+            </div>
+
+        `).join("");
+}
+
+
+/* -----------------------------------------------------------------------
+   Roster table header
+------------------------------------------------------------------------ */
+
+function renderRosterHead() {
+
+    const contestColumns = getContestColumns();
+
+    const headers = [
+
+        ["name", "Name"],
+        ["regNo", "Reg. No"],
+        ["codechefId", "CodeChef ID"],
+        ["memberType", "Type"],
+        ["attendanceStatus", "Status"],
+        ["contestsParticipated", "Contests"],
+        ["totalProblemsSolved", "Problems Solved"],
+        ["attendanceRate", "Attendance %"]
+
+    ];
+
+
+    let html = "<tr>";
+
+
+    headers.forEach(([key, label]) => {
+
+        const arrow =
+            state.sortKey === key
+                ? (
+                    state.sortDir === "asc"
+                        ? "▲"
+                        : "▼"
+                )
+                : "";
+
+        html += `
+            <th data-key="${escapeHtml(key)}">
+                ${escapeHtml(label)}
+                <span class="arrow">
+                    ${arrow}
+                </span>
+            </th>
+        `;
     });
-  });
-}
 
-function syncSortSelect(){
-  const sel = document.getElementById('sortSelect');
-  const value = `${state.sortKey}_${state.sortDir}`;
-  if ([...sel.options].some(o => o.value === value)) sel.value = value;
-}
 
-function getFilteredSortedMembers(){
-  let rows = (DASHBOARD_DATA.members || []).slice();
+    contestColumns.forEach(column => {
 
-  if (state.cohort !== 'All') {
-    rows = rows.filter(r => r.memberType === state.cohort);
-  }
-  if (state.search.trim()) {
-    const q = state.search.trim().toLowerCase();
-    rows = rows.filter(r =>
-      (r.name || '').toLowerCase().includes(q) ||
-      (String(r.regNo) || '').toLowerCase().includes(q)
-    );
-  }
-
-  const { sortKey, sortDir } = state;
-  rows.sort((a,b) => {
-    let av = a[sortKey], bv = b[sortKey];
-    if (typeof av === 'string') av = av.toLowerCase();
-    if (typeof bv === 'string') bv = bv.toLowerCase();
-    if (av < bv) return sortDir === 'asc' ? -1 : 1;
-    if (av > bv) return sortDir === 'asc' ? 1 : -1;
-    return 0;
-  });
-  return rows;
-}
-
-function renderRosterBody(){
-  const rows = getFilteredSortedMembers();
-  const cols = contestCols();
-  document.getElementById('rowCount').textContent = `${rows.length} member(s)`;
-
-  if (!rows.length) {
-    document.getElementById('rosterBody').innerHTML = '';
-    document.getElementById('rosterEmpty').style.display = 'block';
-    return;
-  }
-  document.getElementById('rosterEmpty').style.display = 'none';
-
-  document.getElementById('rosterBody').innerHTML = rows.map(r => {
-    const typePill = r.memberType === 'Core'
-      ? `<span class="pill pill-core">Core</span>`
-      : `<span class="pill pill-ffcs">FFCS</span>`;
-    const statusPill = r.attendanceStatus === 'Present'
-      ? `<span class="pill pill-present">Present</span>`
-      : `<span class="pill pill-absent">Absent</span>`;
-    const contestCells = cols.map(c => `<td>${(r.perContest && r.perContest[c]) || 0}</td>`).join('');
-    return `<tr>
-      <td>${r.name}</td>
-      <td>${r.regNo}</td>
-      <td>${r.codechefId}</td>
-      <td>${typePill}</td>
-      <td>${statusPill}</td>
-      <td>${r.contestsParticipated}</td>
-      <td>${r.totalProblemsSolved}</td>
-      <td>${r.attendanceRate}%</td>
-      ${contestCells}
-    </tr>`;
-  }).join('');
-}
-
-function renderMeeting(){
-  const meeting = DASHBOARD_DATA.meeting || {columns:[],records:[]};
-  if (!meeting.columns.length) return;
-  document.getElementById('meetingPanel').style.display = 'block';
-  document.getElementById('meetingHead').innerHTML =
-    '<tr>' + meeting.columns.map(c => `<th>${c}</th>`).join('') + '</tr>';
-  document.getElementById('meetingBody').innerHTML = meeting.records.map(rec =>
-    '<tr>' + meeting.columns.map(c => `<td>${rec[c] ?? ''}</td>`).join('') + '</tr>'
-  ).join('');
-}
-
-function init(){
-  document.getElementById('generatedBadge').textContent =
-    DASHBOARD_DATA.generatedAt ? `Last updated: ${DASHBOARD_DATA.generatedAt}` : 'Preview mode (no data)';
-
-  renderKpis();
-  renderRosterHead();
-  renderRosterBody();
-  renderMeeting();
-
-  document.querySelectorAll('#cohortTabs button').forEach(btn => {
-    btn.addEventListener('click', () => {
-      document.querySelectorAll('#cohortTabs button').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      state.cohort = btn.dataset.cohort;
-      renderRosterBody();
+        html += `
+            <th>
+                ${escapeHtml(column)}
+            </th>
+        `;
     });
-  });
 
-  document.getElementById('searchInput').addEventListener('input', (e) => {
-    state.search = e.target.value;
-    renderRosterBody();
-  });
 
-  document.getElementById('sortSelect').addEventListener('change', (e) => {
-    const [key, dir] = e.target.value.split('_');
-    state.sortKey = key;
-    state.sortDir = dir;
+    html += "</tr>";
+
+
+    document.getElementById("rosterHead").innerHTML = html;
+
+
+    document
+        .querySelectorAll("#rosterHead th[data-key]")
+        .forEach(th => {
+
+            th.addEventListener("click", () => {
+
+                const key = th.dataset.key;
+
+
+                if (state.sortKey === key) {
+
+                    state.sortDir =
+                        state.sortDir === "asc"
+                            ? "desc"
+                            : "asc";
+
+                } else {
+
+                    state.sortKey = key;
+
+                    state.sortDir =
+                        [
+                            "name",
+                            "memberType",
+                            "attendanceStatus",
+                            "codechefId",
+                            "regNo"
+                        ].includes(key)
+                            ? "asc"
+                            : "desc";
+                }
+
+
+                syncSortSelect();
+
+                renderRosterHead();
+
+                renderRosterBody();
+            });
+        });
+}
+
+
+/* -----------------------------------------------------------------------
+   Sort dropdown
+------------------------------------------------------------------------ */
+
+function syncSortSelect() {
+
+    const select =
+        document.getElementById("sortSelect");
+
+    const value =
+        `${state.sortKey}_${state.sortDir}`;
+
+
+    if (
+        [...select.options]
+            .some(option => option.value === value)
+    ) {
+        select.value = value;
+    }
+}
+
+
+/* -----------------------------------------------------------------------
+   Filtering and sorting
+------------------------------------------------------------------------ */
+
+function getFilteredSortedMembers() {
+
+    let rows =
+        (DASHBOARD_DATA.members || []).slice();
+
+
+    // Cohort filter.
+    if (state.cohort !== "All") {
+
+        rows = rows.filter(
+            row => row.memberType === state.cohort
+        );
+    }
+
+
+    // Search filter.
+    const query =
+        state.search.trim().toLowerCase();
+
+
+    if (query) {
+
+        rows = rows.filter(row => {
+
+            const name =
+                String(row.name || "").toLowerCase();
+
+            const regNo =
+                String(row.regNo || "").toLowerCase();
+
+            const codechefId =
+                String(row.codechefId || "").toLowerCase();
+
+            return (
+                name.includes(query) ||
+                regNo.includes(query) ||
+                codechefId.includes(query)
+            );
+        });
+    }
+
+
+    // Sorting.
+    const {
+        sortKey,
+        sortDir
+    } = state;
+
+
+    rows.sort((a, b) => {
+
+        let av = a[sortKey];
+        let bv = b[sortKey];
+
+
+        if (
+            av === undefined ||
+            av === null
+        ) {
+            av = "";
+        }
+
+
+        if (
+            bv === undefined ||
+            bv === null
+        ) {
+            bv = "";
+        }
+
+
+        if (
+            typeof av === "string" &&
+            typeof bv === "string"
+        ) {
+
+            av = av.toLowerCase();
+            bv = bv.toLowerCase();
+        }
+
+
+        if (av < bv) {
+            return sortDir === "asc"
+                ? -1
+                : 1;
+        }
+
+
+        if (av > bv) {
+            return sortDir === "asc"
+                ? 1
+                : -1;
+        }
+
+
+        return 0;
+    });
+
+
+    return rows;
+}
+
+
+/* -----------------------------------------------------------------------
+   Roster body
+------------------------------------------------------------------------ */
+
+function renderRosterBody() {
+
+    const rows =
+        getFilteredSortedMembers();
+
+    const contestColumns =
+        getContestColumns();
+
+
+    document.getElementById("rowCount").textContent =
+        `${rows.length} member(s)`;
+
+
+    if (!rows.length) {
+
+        document.getElementById("rosterBody")
+            .innerHTML = "";
+
+        document.getElementById("rosterEmpty")
+            .style.display = "block";
+
+        return;
+    }
+
+
+    document.getElementById("rosterEmpty")
+        .style.display = "none";
+
+
+    document.getElementById("rosterBody").innerHTML =
+        rows.map(row => {
+
+            const typePill =
+                row.memberType === "Core"
+
+                    ? `
+                        <span class="pill pill-core">
+                            Core
+                        </span>
+                    `
+
+                    : `
+                        <span class="pill pill-ffcs">
+                            FFCS
+                        </span>
+                    `;
+
+
+            const statusPill =
+                row.attendanceStatus === "Present"
+
+                    ? `
+                        <span class="pill pill-present">
+                            Present
+                        </span>
+                    `
+
+                    : `
+                        <span class="pill pill-absent">
+                            Absent
+                        </span>
+                    `;
+
+
+            const contestCells =
+                contestColumns
+                    .map(column => {
+
+                        const value =
+                            row.perContest &&
+                            row.perContest[column] !== undefined
+                                ? row.perContest[column]
+                                : 0;
+
+                        return `
+                            <td>
+                                ${escapeHtml(value)}
+                            </td>
+                        `;
+                    })
+                    .join("");
+
+
+            return `
+
+                <tr>
+
+                    <td>
+                        ${escapeHtml(row.name)}
+                    </td>
+
+                    <td>
+                        ${escapeHtml(row.regNo)}
+                    </td>
+
+                    <td>
+                        ${escapeHtml(row.codechefId)}
+                    </td>
+
+                    <td>
+                        ${typePill}
+                    </td>
+
+                    <td>
+                        ${statusPill}
+                    </td>
+
+                    <td>
+                        ${escapeHtml(row.contestsParticipated)}
+                    </td>
+
+                    <td>
+                        ${escapeHtml(row.totalProblemsSolved)}
+                    </td>
+
+                    <td>
+                        ${escapeHtml(row.attendanceRate)}%
+                    </td>
+
+                    ${contestCells}
+
+                </tr>
+
+            `;
+        })
+        .join("");
+}
+
+
+/* -----------------------------------------------------------------------
+   Meeting attendance
+------------------------------------------------------------------------ */
+
+function renderMeeting() {
+
+    const meeting =
+        DASHBOARD_DATA.meeting || {
+            columns: [],
+            records: []
+        };
+
+
+    if (
+        !meeting.columns ||
+        !meeting.columns.length
+    ) {
+        return;
+    }
+
+
+    document.getElementById("meetingPanel")
+        .style.display = "block";
+
+
+    document.getElementById("meetingHead")
+        .innerHTML = `
+
+            <tr>
+
+                ${meeting.columns
+                    .map(column => `
+                        <th>
+                            ${escapeHtml(column)}
+                        </th>
+                    `)
+                    .join("")}
+
+            </tr>
+        `;
+
+
+    document.getElementById("meetingBody")
+        .innerHTML =
+            meeting.records
+                .map(record => `
+
+                    <tr>
+
+                        ${meeting.columns
+                            .map(column => `
+
+                                <td>
+                                    ${escapeHtml(
+                                        record[column] ?? ""
+                                    )}
+                                </td>
+
+                            `)
+                            .join("")}
+
+                    </tr>
+
+                `)
+                .join("");
+}
+
+
+/* -----------------------------------------------------------------------
+   Event handlers
+------------------------------------------------------------------------ */
+
+function setupEventHandlers() {
+
+    // Cohort tabs.
+    document
+        .querySelectorAll("#cohortTabs button")
+        .forEach(button => {
+
+            button.addEventListener("click", () => {
+
+                document
+                    .querySelectorAll("#cohortTabs button")
+                    .forEach(btn =>
+                        btn.classList.remove("active")
+                    );
+
+
+                button.classList.add("active");
+
+
+                state.cohort =
+                    button.dataset.cohort;
+
+
+                renderRosterBody();
+            });
+        });
+
+
+    // Search.
+    document
+        .getElementById("searchInput")
+        .addEventListener("input", event => {
+
+            state.search =
+                event.target.value;
+
+            renderRosterBody();
+        });
+
+
+    // Sort dropdown.
+    document
+        .getElementById("sortSelect")
+        .addEventListener("change", event => {
+
+            const parts =
+                event.target.value.split("_");
+
+            const key =
+                parts[0];
+
+            const dir =
+                parts[1];
+
+
+            state.sortKey = key;
+            state.sortDir = dir;
+
+
+            renderRosterHead();
+            renderRosterBody();
+        });
+}
+
+
+/* -----------------------------------------------------------------------
+   Initialization
+------------------------------------------------------------------------ */
+
+function init() {
+
+    const generatedBadge =
+        document.getElementById(
+            "generatedBadge"
+        );
+
+
+    if (DASHBOARD_DATA.generatedAt) {
+
+        generatedBadge.textContent =
+            `Last updated: ${DASHBOARD_DATA.generatedAt}`;
+
+    } else {
+
+        generatedBadge.textContent =
+            "Preview mode (no data)";
+    }
+
+
+    renderKpis();
+
     renderRosterHead();
+
     renderRosterBody();
-  });
+
+    renderMeeting();
+
+    setupEventHandlers();
+
+    syncSortSelect();
 }
+
 
 init();
+
 </script>
+
 </body>
 </html>
+
