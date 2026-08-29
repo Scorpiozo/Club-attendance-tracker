@@ -387,7 +387,6 @@ def build_dataset() -> dict:
     ffcs_df = load_cohort(
         FFCS_EXCEL,
         "FFCS",
-        fallback_roster=FFCS_ROSTER_FALLBACK,
     )
 
     # -----------------------------------------------------------------------
