@@ -1,492 +1,311 @@
 <!DOCTYPE html>
-<html lang="en" class="dark">
+<html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Technical Department Dashboard</title>
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- DataTables CSS for Search & Sorting -->
-    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
-    <style>
-        body { background-color: #0f172a; color: #f8fafc; font-family: sans-serif; }
-        .dataTables_wrapper { color: #94a3b8; font-size: 0.875rem; }
-        table.dataTable tbody tr { background-color: #1e293b; color: #f8fafc; border-bottom: 1px solid #334155; }
-        table.dataTable tbody tr:hover { background-color: #334155; }
-        table.dataTable header th { background-color: #0f172a; color: #60a5fa; }
-        .dataTables_wrapper .dataTables_length, .dataTables_wrapper .dataTables_filter, 
-        .dataTables_wrapper .dataTables_info, .dataTables_wrapper .dataTables_paginate { color: #94a3b8 !important; margin-bottom: 10px; }
-        input, select { background-color: #1e293b !important; color: #f8fafc !important; border: 1px solid #475569 !important; border-radius: 6px; padding: 4px 8px; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CodeChef Contest Tracking Hub</title>
+<style>
+  :root{
+    --bg:#0f172a; --panel:#1e293b; --panel-2:#16213a; --border:#2c3b57;
+    --text:#f1f5f9; --muted:#94a3b8; --blue:#60a5fa; --green:#34d399;
+    --purple:#c084fc; --amber:#fbbf24; --red:#f87171;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;}
+  .wrap{max-width:1200px;margin:0 auto;padding:24px 16px 60px}
+  header.top{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;
+    background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:20px 24px;margin-bottom:20px}
+  header.top h1{margin:0;font-size:1.4rem;color:var(--blue)}
+  header.top p{margin:4px 0 0;font-size:.8rem;color:var(--muted)}
+  .badge{font-size:.7rem;color:var(--muted);background:var(--panel-2);border:1px solid var(--border);
+    padding:4px 10px;border-radius:999px}
+
+  .kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px;margin-bottom:22px}
+  .kpi-card{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:16px 18px}
+  .kpi-card .label{font-size:.7rem;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);font-weight:600}
+  .kpi-card .value{font-size:1.8rem;font-weight:800;margin-top:6px}
+  .kpi-card .sub{font-size:.72rem;color:var(--muted);margin-top:4px}
+  .kpi-blue .value{color:var(--blue)} .kpi-green .value{color:var(--green)}
+  .kpi-purple .value{color:var(--purple)} .kpi-amber .value{color:var(--amber)}
+
+  .tabs{display:flex;gap:6px;border-bottom:1px solid var(--border);margin-bottom:16px;flex-wrap:wrap}
+  .tabs button{background:none;border:none;color:var(--muted);font-weight:600;font-size:.9rem;
+    padding:10px 16px;cursor:pointer;border-bottom:2px solid transparent}
+  .tabs button.active{color:var(--blue);border-bottom-color:var(--blue)}
+  .tabs button:hover{color:var(--text)}
+
+  .panel{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:18px 20px;margin-bottom:20px}
+  .panel h2{margin:0 0 14px;font-size:1rem;color:var(--text)}
+
+  .controls{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;align-items:center}
+  .controls input[type=text]{flex:1;min-width:200px;background:var(--panel-2);border:1px solid var(--border);
+    color:var(--text);border-radius:8px;padding:9px 12px;font-size:.85rem}
+  .controls select{background:var(--panel-2);border:1px solid var(--border);color:var(--text);
+    border-radius:8px;padding:9px 12px;font-size:.85rem}
+  .controls .count{font-size:.75rem;color:var(--muted);white-space:nowrap}
+
+  table{width:100%;border-collapse:collapse;font-size:.83rem}
+  thead th{position:sticky;top:0;background:var(--panel-2);color:var(--blue);text-align:left;
+    padding:10px 12px;border-bottom:1px solid var(--border);cursor:pointer;user-select:none;white-space:nowrap}
+  thead th:hover{color:var(--text)}
+  thead th .arrow{font-size:.7rem;opacity:.6;margin-left:4px}
+  tbody td{padding:9px 12px;border-bottom:1px solid var(--border);white-space:nowrap}
+  tbody tr:hover{background:var(--panel-2)}
+  .table-scroll{overflow-x:auto;max-height:560px;overflow-y:auto;border-radius:8px}
+
+  .pill{display:inline-block;padding:2px 9px;border-radius:999px;font-size:.7rem;font-weight:700}
+  .pill-core{background:rgba(96,165,250,.15);color:var(--blue)}
+  .pill-ffcs{background:rgba(192,132,252,.15);color:var(--purple)}
+  .pill-present{background:rgba(52,211,153,.15);color:var(--green)}
+  .pill-absent{background:rgba(248,113,113,.15);color:var(--red)}
+
+  .empty{padding:30px;text-align:center;color:var(--muted);font-size:.85rem}
+  footer{text-align:center;color:var(--muted);font-size:.72rem;margin-top:20px}
+  @media (max-width:640px){ .kpi-card .value{font-size:1.4rem} }
+</style>
 </head>
-<body class="p-6">
-    <div class="max-w-6xl mx-auto space-y-6">
-        <!-- Header -->
-        <header class="flex justify-between items-center bg-slate-800 p-6 rounded-xl border border-slate-700">
-            <div>
-                <h1 class="text-2xl font-bold text-blue-400">⚡ Technical Department Hub</h1>
-                <p class="text-xs text-slate-400">Live Attendance & Contest Performance (Read-Only)</p>
-            </div>
-        </header>
+<body>
+<div class="wrap">
 
-        <!-- Navigation Tabs -->
-        <div class="flex gap-4 border-b border-slate-700 pb-2">
-            <button onclick="switchTab('roster')" id="tab-roster-btn" class="px-4 py-2 font-semibold text-blue-400 border-b-2 border-blue-400">Member Roster & Contests</button>
-            <button onclick="switchTab('meeting')" id="tab-meeting-btn" class="px-4 py-2 font-semibold text-slate-400 hover:text-slate-200">Meeting Attendance</button>
-        </div>
-
-        <!-- Tab 1: CP Members -->
-        <div id="tab-roster" class="bg-slate-800 p-6 rounded-xl border border-slate-700">
-            <h2 class="text-lg font-bold text-slate-200 mb-4">CP Member & Contest Roster</h2>
-            <div class="overflow-x-auto">
-                <table class="dataframe display responsive nowrap w-full text-sm text-slate-200">
-  <thead>
-    <tr style="text-align: right;">
-      <th>Name</th>
-      <th>Register number</th>
-      <th>Phone number</th>
-      <th>Username</th>
-      <th>Starters 246</th>
-      <th>Starters 247</th>
-      <th>Starters 252</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td>Ved Mewada</td>
-      <td>25BCE1969</td>
-      <td>9998667888</td>
-      <td>ved1969</td>
-      <td>3</td>
-      <td>0</td>
-      <td>0</td>
-    </tr>
-    <tr>
-      <td>Pratyaksh Rai</td>
-      <td>24BPS1071</td>
-      <td>8467095435</td>
-      <td>pratyakshrai01</td>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
-    </tr>
-    <tr>
-      <td>Manan Singhal</td>
-      <td>25BCE1183</td>
-      <td>7357511041</td>
-      <td>Entity_404</td>
-      <td>4</td>
-      <td>0</td>
-      <td>0</td>
-    </tr>
-    <tr>
-      <td>MVN AVINASH NAIDU</td>
-      <td>25BLC1183</td>
-      <td>9177202100</td>
-      <td>Avinash95512</td>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
-    </tr>
-    <tr>
-      <td>R. Lenin Fernandez</td>
-      <td>24BCE1009</td>
-      <td>7395927689</td>
-      <td>grand_glow_31</td>
-      <td>3</td>
-      <td>0</td>
-      <td>0</td>
-    </tr>
-    <tr>
-      <td>Manisha Bharadwaj</td>
-      <td>24BRS1126</td>
-      <td>7870068838</td>
-      <td>manisha_14star</td>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
-    </tr>
-    <tr>
-      <td>Arkajyoti Banerjee</td>
-      <td>25BEE1216</td>
-      <td>8240087955</td>
-      <td>cheer_atom_78</td>
-      <td>0</td>
-      <td>0</td>
-      <td>4</td>
-    </tr>
-    <tr>
-      <td>Rupayan Roy</td>
-      <td>24BAI1229</td>
-      <td>7603913238</td>
-      <td>most_fury_06</td>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
-    </tr>
-    <tr>
-      <td>Shriram</td>
-      <td>25BAI1619</td>
-      <td>9884464562</td>
-      <td>nooblypro</td>
-      <td>3</td>
-      <td>0</td>
-      <td>3</td>
-    </tr>
-    <tr>
-      <td>Lalam Yasaswi</td>
-      <td>24BAI1204</td>
-      <td>9030730696</td>
-      <td>scurry_feat_49</td>
-      <td>4</td>
-      <td>0</td>
-      <td>2</td>
-    </tr>
-    <tr>
-      <td>Aayush Talukdar</td>
-      <td>25BCE5826</td>
-      <td>6372111245</td>
-      <td>aayush_dev2101</td>
-      <td>3</td>
-      <td>4</td>
-      <td>0</td>
-    </tr>
-    <tr>
-      <td>Sudhiksha S</td>
-      <td>24BAI1313</td>
-      <td>7386723779</td>
-      <td>giddy_pine_36</td>
-      <td>3</td>
-      <td>3</td>
-      <td>0</td>
-    </tr>
-    <tr>
-      <td>Prabjot Singh</td>
-      <td>25BCE5163</td>
-      <td>7006933519</td>
-      <td>prabjot_singh</td>
-      <td>4</td>
-      <td>4</td>
-      <td>0</td>
-    </tr>
-    <tr>
-      <td>Akansha</td>
-      <td>25BCE5532</td>
-      <td>9935712711</td>
-      <td>gaze_98</td>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
-    </tr>
-    <tr>
-      <td>Kishor Kumar A</td>
-      <td>25BCE5811</td>
-      <td>9003223034</td>
-      <td>kishorkumar007</td>
-      <td>0</td>
-      <td>4</td>
-      <td>0</td>
-    </tr>
-    <tr>
-      <td>Jyoti Yadav</td>
-      <td>24BAI1639</td>
-      <td>8950799910</td>
-      <td>jyotiyadav24</td>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
-    </tr>
-    <tr>
-      <td>B Bhavana Deepthi</td>
-      <td>23BRS1170</td>
-      <td>9398172990</td>
-      <td>bhavana2023</td>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
-    </tr>
-    <tr>
-      <td>Joal Yuhanon Thomas</td>
-      <td>25BEC1033</td>
-      <td>9895297289</td>
-      <td>joalyt</td>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
-    </tr>
-    <tr>
-      <td>Kunj Patel</td>
-      <td>25BCE5591</td>
-      <td>9399234486</td>
-      <td>kunj_008</td>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
-    </tr>
-    <tr>
-      <td>Vishnu Gonuguntla</td>
-      <td>25BCE5054</td>
-      <td>8390904936</td>
-      <td>mainvishnuhoon</td>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
-    </tr>
-    <tr>
-      <td>K.G.Dharaneesh</td>
-      <td>25BCE5063</td>
-      <td>9025580044</td>
-      <td>headboy14</td>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
-    </tr>
-    <tr>
-      <td>anurag rawat</td>
-      <td>25brs1128</td>
-      <td>8718946895</td>
-      <td>anuragggg</td>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
-    </tr>
-    <tr>
-      <td>M Kavin Velan</td>
-      <td>25MID1016</td>
-      <td>7305542772</td>
-      <td>kavin2007</td>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
-    </tr>
-    <tr>
-      <td>Rrishabh Sankaran</td>
-      <td>24BAI1071</td>
-      <td>9655635923</td>
-      <td>knot_treat_60</td>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
-    </tr>
-    <tr>
-      <td>Nookala Kumari Akshara</td>
-      <td>25brs1111</td>
-      <td>6301777824</td>
-      <td>ind_akshara</td>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
-    </tr>
-    <tr>
-      <td>Tanmay Suresh Kotadia</td>
-      <td>24BCE5281</td>
-      <td>956211707</td>
-      <td>tanmaykotadia</td>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
-    </tr>
-    <tr>
-      <td>Siddharth Silori</td>
-      <td>25BAI1368</td>
-      <td>7017097553</td>
-      <td>Siddycodes_101</td>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
-    </tr>
-    <tr>
-      <td>Shivsankar S</td>
-      <td>25BCE1735</td>
-      <td>8547224301</td>
-      <td>sshivsankar19</td>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
-    </tr>
-    <tr>
-      <td>Ved Mewada</td>
-      <td>25BCE1969</td>
-      <td>9998667888</td>
-      <td>ved1969</td>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
-    </tr>
-    <tr>
-      <td>Tanvi Nirmal</td>
-      <td>25BCE1336</td>
-      <td>6379553392</td>
-      <td>tan_v_25</td>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
-    </tr>
-    <tr>
-      <td>Sudiksha Gupta</td>
-      <td>25BCE1824</td>
-      <td>7877984342</td>
-      <td>pure_seed_53</td>
-      <td>0</td>
-      <td>0</td>
-      <td>4</td>
-    </tr>
-    <tr>
-      <td>Abhishek R Iyengar</td>
-      <td>24MIA1042</td>
-      <td>8369179576</td>
-      <td>abhishek121206</td>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
-    </tr>
-    <tr>
-      <td>Prince predeep</td>
-      <td>24MIS1007</td>
-      <td>8075327997</td>
-      <td>Prince predeep</td>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
-    </tr>
-    <tr>
-      <td>HARITH S R</td>
-      <td>25BCE5179</td>
-      <td>9482712848</td>
-      <td>harithsr</td>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
-    </tr>
-    <tr>
-      <td>Giridar V.G</td>
-      <td>25BCE5162</td>
-      <td>9500365662</td>
-      <td>giridar_2007</td>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
-    </tr>
-    <tr>
-      <td>Aryan Jain</td>
-      <td>25bce1910</td>
-      <td>9840502912</td>
-      <td>aryanvjain20</td>
-      <td>4</td>
-      <td>3</td>
-      <td>0</td>
-    </tr>
-    <tr>
-      <td>U NAREN</td>
-      <td>25BDS1181</td>
-      <td>9884198689</td>
-      <td>naren_dev24k</td>
-      <td>4</td>
-      <td>1</td>
-      <td>0</td>
-    </tr>
-    <tr>
-      <td>Subham kumar behera</td>
-      <td>24BCE5322</td>
-      <td>7606996818</td>
-      <td>biswa_pra_05</td>
-      <td>4</td>
-      <td>4</td>
-      <td>0</td>
-    </tr>
-    <tr>
-      <td>Swati Prasad</td>
-      <td>25BCE5589</td>
-      <td>7013522537</td>
-      <td>swatiprasad_26</td>
-      <td>0</td>
-      <td>2</td>
-      <td>0</td>
-    </tr>
-    <tr>
-      <td>Sagnik Sen</td>
-      <td>24BCE5309</td>
-      <td>9734187783</td>
-      <td>sagnik_sen</td>
-      <td>0</td>
-      <td>4</td>
-      <td>5</td>
-    </tr>
-    <tr>
-      <td>Aswin Bharathi M J</td>
-      <td>24MIS1080</td>
-      <td>9361201097</td>
-      <td>calm_foxes_49</td>
-      <td>1</td>
-      <td>0</td>
-      <td>0</td>
-    </tr>
-    <tr>
-      <td>Joel Panjimaram Mathew</td>
-      <td>24BAI1426</td>
-      <td>9150943024</td>
-      <td>worm_luck_27</td>
-      <td>4</td>
-      <td>0</td>
-      <td>4</td>
-    </tr>
-    <tr>
-      <td>Sankari S</td>
-      <td>24MIS1079</td>
-      <td>8637447960</td>
-      <td>varsh_2025</td>
-      <td>3</td>
-      <td>0</td>
-      <td>2</td>
-    </tr>
-    <tr>
-      <td>Anandha Poorana Thraya S S</td>
-      <td>25BCE1143</td>
-      <td>9042769165</td>
-      <td>apt_code_1903</td>
-      <td>0</td>
-      <td>0</td>
-      <td>1</td>
-    </tr>
-  </tbody>
-</table>
-            </div>
-        </div>
-
-        <!-- Tab 2: Meetings -->
-        <div id="tab-meeting" class="bg-slate-800 p-6 rounded-xl border border-slate-700 hidden">
-            <h2 class="text-lg font-bold text-slate-200 mb-4">Meeting Attendance Logs</h2>
-            <div class="overflow-x-auto">
-                <p class='text-amber-400 p-4'>File not generated yet.</p>
-            </div>
-        </div>
+  <header class="top">
+    <div>
+      <h1>⚡ CodeChef Contest Tracking Hub</h1>
+      <p>Core CP &amp; FFCS attendance / performance dashboard — read-only, generated statically</p>
     </div>
+    <span class="badge" id="generatedBadge">—</span>
+  </header>
 
-    <!-- DataTables & Tab Switching JS -->
-    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
-    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
-    <script>
-        $(document).ready(function() {
-            $('table').DataTable({
-                responsive: true,
-                pageLength: 10,
-                lengthMenu: [10, 25, 50, 100]
-            });
-        });
+  <div class="kpi-grid" id="kpiGrid"></div>
 
-        function switchTab(tab) {
-            if (tab === 'roster') {
-                $('#tab-roster').removeClass('hidden');
-                $('#tab-meeting').addClass('hidden');
-                $('#tab-roster-btn').addClass('text-blue-400 border-b-2 border-blue-400').removeClass('text-slate-400');
-                $('#tab-meeting-btn').removeClass('text-blue-400 border-b-2 border-blue-400').addClass('text-slate-400');
-            } else {
-                $('#tab-meeting').removeClass('hidden');
-                $('#tab-roster').addClass('hidden');
-                $('#tab-meeting-btn').addClass('text-blue-400 border-b-2 border-blue-400').removeClass('text-slate-400');
-                $('#tab-roster-btn').removeClass('text-blue-400 border-b-2 border-blue-400').addClass('text-slate-400');
-            }
-        }
-    </script>
+  <div class="tabs" id="cohortTabs">
+    <button data-cohort="All" class="active">All Members</button>
+    <button data-cohort="Core">Core CP</button>
+    <button data-cohort="FFCS">FFCS Members</button>
+  </div>
+
+  <div class="panel">
+    <h2>Member Roster &amp; Contest Performance</h2>
+    <div class="controls">
+      <input type="text" id="searchInput" placeholder="Search by name or registration number…">
+      <select id="sortSelect">
+        <option value="totalProblemsSolved_desc">Sort: Problems solved (high→low)</option>
+        <option value="totalProblemsSolved_asc">Sort: Problems solved (low→high)</option>
+        <option value="contestsParticipated_desc">Sort: Contests participated (high→low)</option>
+        <option value="attendanceRate_desc">Sort: Attendance rate (high→low)</option>
+        <option value="name_asc">Sort: Name (A→Z)</option>
+      </select>
+      <span class="count" id="rowCount"></span>
+    </div>
+    <div class="table-scroll">
+      <table id="rosterTable">
+        <thead id="rosterHead"></thead>
+        <tbody id="rosterBody"></tbody>
+      </table>
+      <div class="empty" id="rosterEmpty" style="display:none">No members match your search/filter.</div>
+    </div>
+  </div>
+
+  <div class="panel" id="meetingPanel" style="display:none">
+    <h2>Meeting Attendance Logs</h2>
+    <div class="table-scroll">
+      <table id="meetingTable">
+        <thead id="meetingHead"></thead>
+        <tbody id="meetingBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <footer>Generated by export_static.py · No runtime API calls · Safe for GitHub Pages</footer>
+</div>
+
+<script>
+const DASHBOARD_DATA = {"generatedAt": "2026-08-29T19:43:58", "contestList": [246, 247, 252], "contestLabels": ["Starters 246", "Starters 247", "Starters 252"], "kpis": {"totalMembers": 88, "totalActiveSolvers": 38, "coreCount": 44, "coreTurnoutRate": 86.4, "ffcsCount": 44, "ffcsTurnoutRate": 0.0, "contestsTracked": 3, "overallTopPerformer": {"name": "K.G.Dharaneesh", "memberType": "Core", "solved": 12}, "topPerformersByContest": {"Starters 246": {"name": "Manan Singhal", "memberType": "Core", "solved": 4}, "Starters 247": {"name": "Ved Mewada", "memberType": "Core", "solved": 4}, "Starters 252": {"name": "Akansha", "memberType": "Core", "solved": 6}}}, "members": [{"name": "Ved Mewada", "regNo": "25BCE1969", "codechefId": "ved1969", "memberType": "Core", "attendanceStatus": "Present", "totalProblemsSolved": 11, "contestsParticipated": 3, "contestsTracked": 3, "attendanceRate": 100.0, "perContest": {"Starters 247": 4, "Starters 246": 3, "Starters 252": 4}}, {"name": "Pratyaksh Rai", "regNo": "24BPS1071", "codechefId": "pratyakshrai01", "memberType": "Core", "attendanceStatus": "Present", "totalProblemsSolved": 5, "contestsParticipated": 1, "contestsTracked": 3, "attendanceRate": 33.3, "perContest": {"Starters 247": 0, "Starters 246": 0, "Starters 252": 5}}, {"name": "Manan Singhal", "regNo": "25BCE1183", "codechefId": "Entity_404", "memberType": "Core", "attendanceStatus": "Present", "totalProblemsSolved": 11, "contestsParticipated": 3, "contestsTracked": 3, "attendanceRate": 100.0, "perContest": {"Starters 247": 4, "Starters 246": 4, "Starters 252": 3}}, {"name": "MVN AVINASH NAIDU", "regNo": "25BLC1183", "codechefId": "Avinash95512", "memberType": "Core", "attendanceStatus": "Present", "totalProblemsSolved": 7, "contestsParticipated": 2, "contestsTracked": 3, "attendanceRate": 66.7, "perContest": {"Starters 247": 4, "Starters 246": 0, "Starters 252": 3}}, {"name": "R. Lenin Fernandez ", "regNo": "24BCE1009", "codechefId": "grand_glow_31", "memberType": "Core", "attendanceStatus": "Present", "totalProblemsSolved": 9, "contestsParticipated": 3, "contestsTracked": 3, "attendanceRate": 100.0, "perContest": {"Starters 247": 2, "Starters 246": 3, "Starters 252": 4}}, {"name": "Manisha Bharadwaj", "regNo": "24BRS1126", "codechefId": "manisha_14star", "memberType": "Core", "attendanceStatus": "Absent", "totalProblemsSolved": 0, "contestsParticipated": 0, "contestsTracked": 3, "attendanceRate": 0.0, "perContest": {"Starters 247": 0, "Starters 246": 0, "Starters 252": 0}}, {"name": "Arkajyoti Banerjee ", "regNo": "25BEE1216 ", "codechefId": "cheer_atom_78", "memberType": "Core", "attendanceStatus": "Present", "totalProblemsSolved": 8, "contestsParticipated": 2, "contestsTracked": 3, "attendanceRate": 66.7, "perContest": {"Starters 247": 4, "Starters 246": 0, "Starters 252": 4}}, {"name": "Rupayan Roy", "regNo": "24BAI1229", "codechefId": "most_fury_06", "memberType": "Core", "attendanceStatus": "Absent", "totalProblemsSolved": 0, "contestsParticipated": 0, "contestsTracked": 3, "attendanceRate": 0.0, "perContest": {"Starters 247": 0, "Starters 246": 0, "Starters 252": 0}}, {"name": "Shriram", "regNo": "25BAI1619 ", "codechefId": "nooblypro", "memberType": "Core", "attendanceStatus": "Present", "totalProblemsSolved": 9, "contestsParticipated": 3, "contestsTracked": 3, "attendanceRate": 100.0, "perContest": {"Starters 247": 3, "Starters 246": 3, "Starters 252": 3}}, {"name": "Lalam Yasaswi ", "regNo": "24BAI1204 ", "codechefId": "scurry_feat_49", "memberType": "Core", "attendanceStatus": "Present", "totalProblemsSolved": 10, "contestsParticipated": 3, "contestsTracked": 3, "attendanceRate": 100.0, "perContest": {"Starters 247": 4, "Starters 246": 4, "Starters 252": 2}}, {"name": "Aayush Talukdar", "regNo": "25BCE5826", "codechefId": "aayush_dev2101", "memberType": "Core", "attendanceStatus": "Present", "totalProblemsSolved": 8, "contestsParticipated": 2, "contestsTracked": 3, "attendanceRate": 66.7, "perContest": {"Starters 247": 4, "Starters 246": 0, "Starters 252": 4}}, {"name": "Sudhiksha S", "regNo": "24BAI1313 ", "codechefId": "giddy_pine_36", "memberType": "Core", "attendanceStatus": "Present", "totalProblemsSolved": 6, "contestsParticipated": 2, "contestsTracked": 3, "attendanceRate": 66.7, "perContest": {"Starters 247": 3, "Starters 246": 3, "Starters 252": 0}}, {"name": "Prabjot Singh", "regNo": "25BCE5163", "codechefId": "prabjot_singh", "memberType": "Core", "attendanceStatus": "Present", "totalProblemsSolved": 8, "contestsParticipated": 2, "contestsTracked": 3, "attendanceRate": 66.7, "perContest": {"Starters 247": 4, "Starters 246": 4, "Starters 252": 0}}, {"name": "Akansha", "regNo": "25BCE5532", "codechefId": "gaze_98", "memberType": "Core", "attendanceStatus": "Present", "totalProblemsSolved": 6, "contestsParticipated": 1, "contestsTracked": 3, "attendanceRate": 33.3, "perContest": {"Starters 247": 0, "Starters 246": 0, "Starters 252": 6}}, {"name": "Kishor Kumar A ", "regNo": "25BCE5811", "codechefId": "kishorkumar007", "memberType": "Core", "attendanceStatus": "Present", "totalProblemsSolved": 4, "contestsParticipated": 1, "contestsTracked": 3, "attendanceRate": 33.3, "perContest": {"Starters 247": 4, "Starters 246": 0, "Starters 252": 0}}, {"name": "Jyoti Yadav ", "regNo": "24BAI1639 ", "codechefId": "jyotiyadav24", "memberType": "Core", "attendanceStatus": "Absent", "totalProblemsSolved": 0, "contestsParticipated": 0, "contestsTracked": 3, "attendanceRate": 0.0, "perContest": {"Starters 247": 0, "Starters 246": 0, "Starters 252": 0}}, {"name": "B Bhavana Deepthi", "regNo": "23BRS1170", "codechefId": "bhavana2023", "memberType": "Core", "attendanceStatus": "Present", "totalProblemsSolved": 2, "contestsParticipated": 1, "contestsTracked": 3, "attendanceRate": 33.3, "perContest": {"Starters 247": 0, "Starters 246": 2, "Starters 252": 0}}, {"name": "Joal Yuhanon Thomas", "regNo": "25BEC1033", "codechefId": "joalyt", "memberType": "Core", "attendanceStatus": "Present", "totalProblemsSolved": 4, "contestsParticipated": 3, "contestsTracked": 3, "attendanceRate": 100.0, "perContest": {"Starters 247": 1, "Starters 246": 2, "Starters 252": 1}}, {"name": "Kunj Patel", "regNo": "25BCE5591", "codechefId": "kunj_008", "memberType": "Core", "attendanceStatus": "Present", "totalProblemsSolved": 10, "contestsParticipated": 3, "contestsTracked": 3, "attendanceRate": 100.0, "perContest": {"Starters 247": 3, "Starters 246": 4, "Starters 252": 3}}, {"name": "Vishnu Gonuguntla", "regNo": "25BCE5054", "codechefId": "mainvishnuhoon", "memberType": "Core", "attendanceStatus": "Present", "totalProblemsSolved": 5, "contestsParticipated": 2, "contestsTracked": 3, "attendanceRate": 66.7, "perContest": {"Starters 247": 3, "Starters 246": 0, "Starters 252": 2}}, {"name": "K.G.Dharaneesh", "regNo": "25BCE5063", "codechefId": "headboy14", "memberType": "Core", "attendanceStatus": "Present", "totalProblemsSolved": 12, "contestsParticipated": 3, "contestsTracked": 3, "attendanceRate": 100.0, "perContest": {"Starters 247": 4, "Starters 246": 4, "Starters 252": 4}}, {"name": "anurag rawat", "regNo": "25brs1128", "codechefId": "anuragggg", "memberType": "Core", "attendanceStatus": "Absent", "totalProblemsSolved": 0, "contestsParticipated": 0, "contestsTracked": 3, "attendanceRate": 0.0, "perContest": {"Starters 247": 0, "Starters 246": 0, "Starters 252": 0}}, {"name": "M Kavin Velan", "regNo": "25MID1016", "codechefId": "kavin2007", "memberType": "Core", "attendanceStatus": "Absent", "totalProblemsSolved": 0, "contestsParticipated": 0, "contestsTracked": 3, "attendanceRate": 0.0, "perContest": {"Starters 247": 0, "Starters 246": 0, "Starters 252": 0}}, {"name": "Rrishabh Sankaran", "regNo": "24BAI1071", "codechefId": "knot_treat_60", "memberType": "Core", "attendanceStatus": "Present", "totalProblemsSolved": 11, "contestsParticipated": 3, "contestsTracked": 3, "attendanceRate": 100.0, "perContest": {"Starters 247": 4, "Starters 246": 4, "Starters 252": 3}}, {"name": "Nookala Kumari Akshara ", "regNo": "25brs1111", "codechefId": "ind_akshara", "memberType": "Core", "attendanceStatus": "Present", "totalProblemsSolved": 8, "contestsParticipated": 2, "contestsTracked": 3, "attendanceRate": 66.7, "perContest": {"Starters 247": 4, "Starters 246": 4, "Starters 252": 0}}, {"name": "Tanmay Suresh Kotadia", "regNo": "24BCE5281", "codechefId": "tanmaykotadia", "memberType": "Core", "attendanceStatus": "Present", "totalProblemsSolved": 3, "contestsParticipated": 1, "contestsTracked": 3, "attendanceRate": 33.3, "perContest": {"Starters 247": 3, "Starters 246": 0, "Starters 252": 0}}, {"name": "Siddharth Silori", "regNo": "25BAI1368", "codechefId": "Siddycodes_101", "memberType": "Core", "attendanceStatus": "Present", "totalProblemsSolved": 3, "contestsParticipated": 1, "contestsTracked": 3, "attendanceRate": 33.3, "perContest": {"Starters 247": 0, "Starters 246": 0, "Starters 252": 3}}, {"name": "Shivsankar S ", "regNo": "25BCE1735", "codechefId": "sshivsankar19", "memberType": "Core", "attendanceStatus": "Present", "totalProblemsSolved": 12, "contestsParticipated": 3, "contestsTracked": 3, "attendanceRate": 100.0, "perContest": {"Starters 247": 4, "Starters 246": 4, "Starters 252": 4}}, {"name": "Ved Mewada", "regNo": "25BCE1969", "codechefId": "ved1969", "memberType": "Core", "attendanceStatus": "Present", "totalProblemsSolved": 11, "contestsParticipated": 3, "contestsTracked": 3, "attendanceRate": 100.0, "perContest": {"Starters 247": 4, "Starters 246": 3, "Starters 252": 4}}, {"name": "Tanvi Nirmal", "regNo": "25BCE1336", "codechefId": "tan_v_25", "memberType": "Core", "attendanceStatus": "Present", "totalProblemsSolved": 7, "contestsParticipated": 3, "contestsTracked": 3, "attendanceRate": 100.0, "perContest": {"Starters 247": 2, "Starters 246": 2, "Starters 252": 3}}, {"name": "Sudiksha Gupta ", "regNo": "25BCE1824", "codechefId": "pure_seed_53", "memberType": "Core", "attendanceStatus": "Present", "totalProblemsSolved": 10, "contestsParticipated": 3, "contestsTracked": 3, "attendanceRate": 100.0, "perContest": {"Starters 247": 3, "Starters 246": 3, "Starters 252": 4}}, {"name": "Abhishek R Iyengar", "regNo": "24MIA1042", "codechefId": "abhishek121206", "memberType": "Core", "attendanceStatus": "Present", "totalProblemsSolved": 1, "contestsParticipated": 1, "contestsTracked": 3, "attendanceRate": 33.3, "perContest": {"Starters 247": 1, "Starters 246": 0, "Starters 252": 0}}, {"name": "Prince predeep", "regNo": "24MIS1007", "codechefId": "Prince predeep", "memberType": "Core", "attendanceStatus": "Absent", "totalProblemsSolved": 0, "contestsParticipated": 0, "contestsTracked": 3, "attendanceRate": 0.0, "perContest": {"Starters 247": 0, "Starters 246": 0, "Starters 252": 0}}, {"name": "HARITH S R", "regNo": "25BCE5179", "codechefId": "harithsr", "memberType": "Core", "attendanceStatus": "Present", "totalProblemsSolved": 1, "contestsParticipated": 1, "contestsTracked": 3, "attendanceRate": 33.3, "perContest": {"Starters 247": 1, "Starters 246": 0, "Starters 252": 0}}, {"name": "Giridar V.G", "regNo": "25BCE5162", "codechefId": "giridar_2007", "memberType": "Core", "attendanceStatus": "Present", "totalProblemsSolved": 1, "contestsParticipated": 1, "contestsTracked": 3, "attendanceRate": 33.3, "perContest": {"Starters 247": 1, "Starters 246": 0, "Starters 252": 0}}, {"name": "Aryan Jain ", "regNo": "25bce1910", "codechefId": "aryanvjain20", "memberType": "Core", "attendanceStatus": "Present", "totalProblemsSolved": 8, "contestsParticipated": 3, "contestsTracked": 3, "attendanceRate": 100.0, "perContest": {"Starters 247": 3, "Starters 246": 4, "Starters 252": 1}}, {"name": "U NAREN", "regNo": "25BDS1181", "codechefId": "naren_dev24k", "memberType": "Core", "attendanceStatus": "Present", "totalProblemsSolved": 7, "contestsParticipated": 3, "contestsTracked": 3, "attendanceRate": 100.0, "perContest": {"Starters 247": 1, "Starters 246": 4, "Starters 252": 2}}, {"name": "Subham kumar behera", "regNo": "24BCE5322", "codechefId": "biswa_pra_05", "memberType": "Core", "attendanceStatus": "Present", "totalProblemsSolved": 8, "contestsParticipated": 2, "contestsTracked": 3, "attendanceRate": 66.7, "perContest": {"Starters 247": 4, "Starters 246": 4, "Starters 252": 0}}, {"name": "Swati Prasad ", "regNo": "25BCE5589", "codechefId": "swatiprasad_26", "memberType": "Core", "attendanceStatus": "Present", "totalProblemsSolved": 2, "contestsParticipated": 1, "contestsTracked": 3, "attendanceRate": 33.3, "perContest": {"Starters 247": 2, "Starters 246": 0, "Starters 252": 0}}, {"name": "Sagnik Sen", "regNo": "24BCE5309", "codechefId": "sagnik_sen", "memberType": "Core", "attendanceStatus": "Present", "totalProblemsSolved": 9, "contestsParticipated": 2, "contestsTracked": 3, "attendanceRate": 66.7, "perContest": {"Starters 247": 4, "Starters 246": 0, "Starters 252": 5}}, {"name": "Aswin Bharathi M J", "regNo": "24MIS1080", "codechefId": "calm_foxes_49", "memberType": "Core", "attendanceStatus": "Present", "totalProblemsSolved": 1, "contestsParticipated": 1, "contestsTracked": 3, "attendanceRate": 33.3, "perContest": {"Starters 247": 0, "Starters 246": 1, "Starters 252": 0}}, {"name": "Joel Panjimaram Mathew ", "regNo": "24BAI1426 ", "codechefId": "worm_luck_27", "memberType": "Core", "attendanceStatus": "Present", "totalProblemsSolved": 11, "contestsParticipated": 3, "contestsTracked": 3, "attendanceRate": 100.0, "perContest": {"Starters 247": 3, "Starters 246": 4, "Starters 252": 4}}, {"name": "Sankari S", "regNo": "24MIS1079", "codechefId": "varsh_2025", "memberType": "Core", "attendanceStatus": "Present", "totalProblemsSolved": 8, "contestsParticipated": 3, "contestsTracked": 3, "attendanceRate": 100.0, "perContest": {"Starters 247": 3, "Starters 246": 3, "Starters 252": 2}}, {"name": "Anandha Poorana Thraya S S", "regNo": "25BCE1143", "codechefId": "apt_code_1903", "memberType": "Core", "attendanceStatus": "Present", "totalProblemsSolved": 5, "contestsParticipated": 2, "contestsTracked": 3, "attendanceRate": 66.7, "perContest": {"Starters 247": 4, "Starters 246": 0, "Starters 252": 1}}, {"name": "Ved Mewada", "regNo": "25BCE1969", "codechefId": "ved1969", "memberType": "FFCS", "attendanceStatus": "Absent", "totalProblemsSolved": 0, "contestsParticipated": 0, "contestsTracked": 0, "attendanceRate": 0.0, "perContest": {}}, {"name": "Pratyaksh Rai", "regNo": "24BPS1071", "codechefId": "pratyakshrai01", "memberType": "FFCS", "attendanceStatus": "Absent", "totalProblemsSolved": 0, "contestsParticipated": 0, "contestsTracked": 0, "attendanceRate": 0.0, "perContest": {}}, {"name": "Manan Singhal", "regNo": "25BCE1183", "codechefId": "Entity_404", "memberType": "FFCS", "attendanceStatus": "Absent", "totalProblemsSolved": 0, "contestsParticipated": 0, "contestsTracked": 0, "attendanceRate": 0.0, "perContest": {}}, {"name": "MVN AVINASH NAIDU", "regNo": "25BLC1183", "codechefId": "Avinash95512", "memberType": "FFCS", "attendanceStatus": "Absent", "totalProblemsSolved": 0, "contestsParticipated": 0, "contestsTracked": 0, "attendanceRate": 0.0, "perContest": {}}, {"name": "R. Lenin Fernandez ", "regNo": "24BCE1009", "codechefId": "grand_glow_31", "memberType": "FFCS", "attendanceStatus": "Absent", "totalProblemsSolved": 0, "contestsParticipated": 0, "contestsTracked": 0, "attendanceRate": 0.0, "perContest": {}}, {"name": "Manisha Bharadwaj", "regNo": "24BRS1126", "codechefId": "manisha_14star", "memberType": "FFCS", "attendanceStatus": "Absent", "totalProblemsSolved": 0, "contestsParticipated": 0, "contestsTracked": 0, "attendanceRate": 0.0, "perContest": {}}, {"name": "Arkajyoti Banerjee ", "regNo": "25BEE1216 ", "codechefId": "cheer_atom_78", "memberType": "FFCS", "attendanceStatus": "Absent", "totalProblemsSolved": 0, "contestsParticipated": 0, "contestsTracked": 0, "attendanceRate": 0.0, "perContest": {}}, {"name": "Rupayan Roy", "regNo": "24BAI1229", "codechefId": "most_fury_06", "memberType": "FFCS", "attendanceStatus": "Absent", "totalProblemsSolved": 0, "contestsParticipated": 0, "contestsTracked": 0, "attendanceRate": 0.0, "perContest": {}}, {"name": "Shriram", "regNo": "25BAI1619 ", "codechefId": "nooblypro", "memberType": "FFCS", "attendanceStatus": "Absent", "totalProblemsSolved": 0, "contestsParticipated": 0, "contestsTracked": 0, "attendanceRate": 0.0, "perContest": {}}, {"name": "Lalam Yasaswi ", "regNo": "24BAI1204 ", "codechefId": "scurry_feat_49", "memberType": "FFCS", "attendanceStatus": "Absent", "totalProblemsSolved": 0, "contestsParticipated": 0, "contestsTracked": 0, "attendanceRate": 0.0, "perContest": {}}, {"name": "Aayush Talukdar", "regNo": "25BCE5826", "codechefId": "aayush_dev2101", "memberType": "FFCS", "attendanceStatus": "Absent", "totalProblemsSolved": 0, "contestsParticipated": 0, "contestsTracked": 0, "attendanceRate": 0.0, "perContest": {}}, {"name": "Sudhiksha S", "regNo": "24BAI1313 ", "codechefId": "giddy_pine_36", "memberType": "FFCS", "attendanceStatus": "Absent", "totalProblemsSolved": 0, "contestsParticipated": 0, "contestsTracked": 0, "attendanceRate": 0.0, "perContest": {}}, {"name": "Prabjot Singh", "regNo": "25BCE5163", "codechefId": "prabjot_singh", "memberType": "FFCS", "attendanceStatus": "Absent", "totalProblemsSolved": 0, "contestsParticipated": 0, "contestsTracked": 0, "attendanceRate": 0.0, "perContest": {}}, {"name": "Akansha", "regNo": "25BCE5532", "codechefId": "gaze_98", "memberType": "FFCS", "attendanceStatus": "Absent", "totalProblemsSolved": 0, "contestsParticipated": 0, "contestsTracked": 0, "attendanceRate": 0.0, "perContest": {}}, {"name": "Kishor Kumar A ", "regNo": "25BCE5811", "codechefId": "kishorkumar007", "memberType": "FFCS", "attendanceStatus": "Absent", "totalProblemsSolved": 0, "contestsParticipated": 0, "contestsTracked": 0, "attendanceRate": 0.0, "perContest": {}}, {"name": "Jyoti Yadav ", "regNo": "24BAI1639 ", "codechefId": "jyotiyadav24", "memberType": "FFCS", "attendanceStatus": "Absent", "totalProblemsSolved": 0, "contestsParticipated": 0, "contestsTracked": 0, "attendanceRate": 0.0, "perContest": {}}, {"name": "B Bhavana Deepthi", "regNo": "23BRS1170", "codechefId": "bhavana2023", "memberType": "FFCS", "attendanceStatus": "Absent", "totalProblemsSolved": 0, "contestsParticipated": 0, "contestsTracked": 0, "attendanceRate": 0.0, "perContest": {}}, {"name": "Joal Yuhanon Thomas", "regNo": "25BEC1033", "codechefId": "joalyt", "memberType": "FFCS", "attendanceStatus": "Absent", "totalProblemsSolved": 0, "contestsParticipated": 0, "contestsTracked": 0, "attendanceRate": 0.0, "perContest": {}}, {"name": "Kunj Patel", "regNo": "25BCE5591", "codechefId": "kunj_008", "memberType": "FFCS", "attendanceStatus": "Absent", "totalProblemsSolved": 0, "contestsParticipated": 0, "contestsTracked": 0, "attendanceRate": 0.0, "perContest": {}}, {"name": "Vishnu Gonuguntla", "regNo": "25BCE5054", "codechefId": "mainvishnuhoon", "memberType": "FFCS", "attendanceStatus": "Absent", "totalProblemsSolved": 0, "contestsParticipated": 0, "contestsTracked": 0, "attendanceRate": 0.0, "perContest": {}}, {"name": "K.G.Dharaneesh", "regNo": "25BCE5063", "codechefId": "headboy14", "memberType": "FFCS", "attendanceStatus": "Absent", "totalProblemsSolved": 0, "contestsParticipated": 0, "contestsTracked": 0, "attendanceRate": 0.0, "perContest": {}}, {"name": "anurag rawat", "regNo": "25brs1128", "codechefId": "anuragggg", "memberType": "FFCS", "attendanceStatus": "Absent", "totalProblemsSolved": 0, "contestsParticipated": 0, "contestsTracked": 0, "attendanceRate": 0.0, "perContest": {}}, {"name": "M Kavin Velan", "regNo": "25MID1016", "codechefId": "kavin2007", "memberType": "FFCS", "attendanceStatus": "Absent", "totalProblemsSolved": 0, "contestsParticipated": 0, "contestsTracked": 0, "attendanceRate": 0.0, "perContest": {}}, {"name": "Rrishabh Sankaran", "regNo": "24BAI1071", "codechefId": "knot_treat_60", "memberType": "FFCS", "attendanceStatus": "Absent", "totalProblemsSolved": 0, "contestsParticipated": 0, "contestsTracked": 0, "attendanceRate": 0.0, "perContest": {}}, {"name": "Nookala Kumari Akshara ", "regNo": "25brs1111", "codechefId": "ind_akshara", "memberType": "FFCS", "attendanceStatus": "Absent", "totalProblemsSolved": 0, "contestsParticipated": 0, "contestsTracked": 0, "attendanceRate": 0.0, "perContest": {}}, {"name": "Tanmay Suresh Kotadia", "regNo": "24BCE5281", "codechefId": "tanmaykotadia", "memberType": "FFCS", "attendanceStatus": "Absent", "totalProblemsSolved": 0, "contestsParticipated": 0, "contestsTracked": 0, "attendanceRate": 0.0, "perContest": {}}, {"name": "Siddharth Silori", "regNo": "25BAI1368", "codechefId": "Siddycodes_101", "memberType": "FFCS", "attendanceStatus": "Absent", "totalProblemsSolved": 0, "contestsParticipated": 0, "contestsTracked": 0, "attendanceRate": 0.0, "perContest": {}}, {"name": "Shivsankar S ", "regNo": "25BCE1735", "codechefId": "sshivsankar19", "memberType": "FFCS", "attendanceStatus": "Absent", "totalProblemsSolved": 0, "contestsParticipated": 0, "contestsTracked": 0, "attendanceRate": 0.0, "perContest": {}}, {"name": "Ved Mewada", "regNo": "25BCE1969", "codechefId": "ved1969", "memberType": "FFCS", "attendanceStatus": "Absent", "totalProblemsSolved": 0, "contestsParticipated": 0, "contestsTracked": 0, "attendanceRate": 0.0, "perContest": {}}, {"name": "Tanvi Nirmal", "regNo": "25BCE1336", "codechefId": "tan_v_25", "memberType": "FFCS", "attendanceStatus": "Absent", "totalProblemsSolved": 0, "contestsParticipated": 0, "contestsTracked": 0, "attendanceRate": 0.0, "perContest": {}}, {"name": "Sudiksha Gupta ", "regNo": "25BCE1824", "codechefId": "pure_seed_53", "memberType": "FFCS", "attendanceStatus": "Absent", "totalProblemsSolved": 0, "contestsParticipated": 0, "contestsTracked": 0, "attendanceRate": 0.0, "perContest": {}}, {"name": "Abhishek R Iyengar", "regNo": "24MIA1042", "codechefId": "abhishek121206", "memberType": "FFCS", "attendanceStatus": "Absent", "totalProblemsSolved": 0, "contestsParticipated": 0, "contestsTracked": 0, "attendanceRate": 0.0, "perContest": {}}, {"name": "Prince predeep", "regNo": "24MIS1007", "codechefId": "Prince predeep", "memberType": "FFCS", "attendanceStatus": "Absent", "totalProblemsSolved": 0, "contestsParticipated": 0, "contestsTracked": 0, "attendanceRate": 0.0, "perContest": {}}, {"name": "HARITH S R", "regNo": "25BCE5179", "codechefId": "harithsr", "memberType": "FFCS", "attendanceStatus": "Absent", "totalProblemsSolved": 0, "contestsParticipated": 0, "contestsTracked": 0, "attendanceRate": 0.0, "perContest": {}}, {"name": "Giridar V.G", "regNo": "25BCE5162", "codechefId": "giridar_2007", "memberType": "FFCS", "attendanceStatus": "Absent", "totalProblemsSolved": 0, "contestsParticipated": 0, "contestsTracked": 0, "attendanceRate": 0.0, "perContest": {}}, {"name": "Aryan Jain ", "regNo": "25bce1910", "codechefId": "aryanvjain20", "memberType": "FFCS", "attendanceStatus": "Absent", "totalProblemsSolved": 0, "contestsParticipated": 0, "contestsTracked": 0, "attendanceRate": 0.0, "perContest": {}}, {"name": "U NAREN", "regNo": "25BDS1181", "codechefId": "naren_dev24k", "memberType": "FFCS", "attendanceStatus": "Absent", "totalProblemsSolved": 0, "contestsParticipated": 0, "contestsTracked": 0, "attendanceRate": 0.0, "perContest": {}}, {"name": "Subham kumar behera", "regNo": "24BCE5322", "codechefId": "biswa_pra_05", "memberType": "FFCS", "attendanceStatus": "Absent", "totalProblemsSolved": 0, "contestsParticipated": 0, "contestsTracked": 0, "attendanceRate": 0.0, "perContest": {}}, {"name": "Swati Prasad ", "regNo": "25BCE5589", "codechefId": "swatiprasad_26", "memberType": "FFCS", "attendanceStatus": "Absent", "totalProblemsSolved": 0, "contestsParticipated": 0, "contestsTracked": 0, "attendanceRate": 0.0, "perContest": {}}, {"name": "Sagnik Sen", "regNo": "24BCE5309", "codechefId": "sagnik_sen", "memberType": "FFCS", "attendanceStatus": "Absent", "totalProblemsSolved": 0, "contestsParticipated": 0, "contestsTracked": 0, "attendanceRate": 0.0, "perContest": {}}, {"name": "Aswin Bharathi M J", "regNo": "24MIS1080", "codechefId": "calm_foxes_49", "memberType": "FFCS", "attendanceStatus": "Absent", "totalProblemsSolved": 0, "contestsParticipated": 0, "contestsTracked": 0, "attendanceRate": 0.0, "perContest": {}}, {"name": "Joel Panjimaram Mathew ", "regNo": "24BAI1426 ", "codechefId": "worm_luck_27", "memberType": "FFCS", "attendanceStatus": "Absent", "totalProblemsSolved": 0, "contestsParticipated": 0, "contestsTracked": 0, "attendanceRate": 0.0, "perContest": {}}, {"name": "Sankari S", "regNo": "24MIS1079", "codechefId": "varsh_2025", "memberType": "FFCS", "attendanceStatus": "Absent", "totalProblemsSolved": 0, "contestsParticipated": 0, "contestsTracked": 0, "attendanceRate": 0.0, "perContest": {}}, {"name": "Anandha Poorana Thraya S S", "regNo": "25BCE1143", "codechefId": "apt_code_1903", "memberType": "FFCS", "attendanceStatus": "Absent", "totalProblemsSolved": 0, "contestsParticipated": 0, "contestsTracked": 0, "attendanceRate": 0.0, "perContest": {}}], "meeting": {"columns": ["Name", "Register number", "Phone number", "Username", "Member Type", "Meeting 2026-08-28"], "records": [{"Name": "Ved Mewada", "Register number": "25BCE1969", "Phone number": 9998667888, "Username": "ved1969", "Member Type": "Core", "Meeting 2026-08-28": 0}, {"Name": "Pratyaksh Rai", "Register number": "24BPS1071", "Phone number": 8467095435, "Username": "pratyakshrai01", "Member Type": "Core", "Meeting 2026-08-28": 0}, {"Name": "Manan Singhal", "Register number": "25BCE1183", "Phone number": 7357511041, "Username": "Entity_404", "Member Type": "Core", "Meeting 2026-08-28": 0}, {"Name": "MVN AVINASH NAIDU", "Register number": "25BLC1183", "Phone number": 9177202100, "Username": "Avinash95512", "Member Type": "Core", "Meeting 2026-08-28": 0}, {"Name": "R. Lenin Fernandez ", "Register number": "24BCE1009", "Phone number": 7395927689, "Username": "grand_glow_31", "Member Type": "Core", "Meeting 2026-08-28": 1}, {"Name": "Manisha Bharadwaj", "Register number": "24BRS1126", "Phone number": 7870068838, "Username": "manisha_14star", "Member Type": "Core", "Meeting 2026-08-28": 0}, {"Name": "Arkajyoti Banerjee ", "Register number": "25BEE1216 ", "Phone number": 8240087955, "Username": "cheer_atom_78", "Member Type": "Core", "Meeting 2026-08-28": 0}, {"Name": "Rupayan Roy", "Register number": "24BAI1229", "Phone number": 7603913238, "Username": "most_fury_06", "Member Type": "Core", "Meeting 2026-08-28": 1}, {"Name": "Shriram", "Register number": "25BAI1619 ", "Phone number": 9884464562, "Username": "nooblypro", "Member Type": "Core", "Meeting 2026-08-28": 1}, {"Name": "Lalam Yasaswi ", "Register number": "24BAI1204 ", "Phone number": 9030730696, "Username": "scurry_feat_49", "Member Type": "Core", "Meeting 2026-08-28": 0}, {"Name": "Aayush Talukdar", "Register number": "25BCE5826", "Phone number": 6372111245, "Username": "aayush_dev2101", "Member Type": "Core", "Meeting 2026-08-28": 0}, {"Name": "Sudhiksha S", "Register number": "24BAI1313 ", "Phone number": 7386723779, "Username": "giddy_pine_36", "Member Type": "Core", "Meeting 2026-08-28": 0}, {"Name": "Prabjot Singh", "Register number": "25BCE5163", "Phone number": 7006933519, "Username": "prabjot_singh", "Member Type": "Core", "Meeting 2026-08-28": 1}, {"Name": "Akansha", "Register number": "25BCE5532", "Phone number": 9935712711, "Username": "gaze_98", "Member Type": "Core", "Meeting 2026-08-28": 1}, {"Name": "Kishor Kumar A ", "Register number": "25BCE5811", "Phone number": 9003223034, "Username": "kishorkumar007", "Member Type": "Core", "Meeting 2026-08-28": 1}, {"Name": "Jyoti Yadav ", "Register number": "24BAI1639 ", "Phone number": 8950799910, "Username": "jyotiyadav24", "Member Type": "Core", "Meeting 2026-08-28": 0}, {"Name": "B Bhavana Deepthi", "Register number": "23BRS1170", "Phone number": 9398172990, "Username": "bhavana2023", "Member Type": "Core", "Meeting 2026-08-28": 0}, {"Name": "Joal Yuhanon Thomas", "Register number": "25BEC1033", "Phone number": 9895297289, "Username": "joalyt", "Member Type": "Core", "Meeting 2026-08-28": 1}, {"Name": "Kunj Patel", "Register number": "25BCE5591", "Phone number": 9399234486, "Username": "kunj_008", "Member Type": "Core", "Meeting 2026-08-28": 1}, {"Name": "Vishnu Gonuguntla", "Register number": "25BCE5054", "Phone number": 8390904936, "Username": "mainvishnuhoon", "Member Type": "Core", "Meeting 2026-08-28": 1}, {"Name": "K.G.Dharaneesh", "Register number": "25BCE5063", "Phone number": 9025580044, "Username": "headboy14", "Member Type": "Core", "Meeting 2026-08-28": 0}, {"Name": "anurag rawat", "Register number": "25brs1128", "Phone number": 8718946895, "Username": "anuragggg", "Member Type": "Core", "Meeting 2026-08-28": 0}, {"Name": "M Kavin Velan", "Register number": "25MID1016", "Phone number": 7305542772, "Username": "kavin2007", "Member Type": "Core", "Meeting 2026-08-28": 0}, {"Name": "Rrishabh Sankaran", "Register number": "24BAI1071", "Phone number": 9655635923, "Username": "knot_treat_60", "Member Type": "Core", "Meeting 2026-08-28": 0}, {"Name": "Nookala Kumari Akshara ", "Register number": "25brs1111", "Phone number": 6301777824, "Username": "ind_akshara", "Member Type": "Core", "Meeting 2026-08-28": 0}, {"Name": "Tanmay Suresh Kotadia", "Register number": "24BCE5281", "Phone number": 956211707, "Username": "tanmaykotadia", "Member Type": "Core", "Meeting 2026-08-28": 0}, {"Name": "Siddharth Silori", "Register number": "25BAI1368", "Phone number": 7017097553, "Username": "Siddycodes_101", "Member Type": "Core", "Meeting 2026-08-28": 1}, {"Name": "Shivsankar S ", "Register number": "25BCE1735", "Phone number": 8547224301, "Username": "sshivsankar19", "Member Type": "Core", "Meeting 2026-08-28": 1}, {"Name": "Ved Mewada", "Register number": "25BCE1969", "Phone number": 9998667888, "Username": "ved1969", "Member Type": "Core", "Meeting 2026-08-28": 0}, {"Name": "Tanvi Nirmal", "Register number": "25BCE1336", "Phone number": 6379553392, "Username": "tan_v_25", "Member Type": "Core", "Meeting 2026-08-28": 1}, {"Name": "Sudiksha Gupta ", "Register number": "25BCE1824", "Phone number": 7877984342, "Username": "pure_seed_53", "Member Type": "Core", "Meeting 2026-08-28": 0}, {"Name": "Abhishek R Iyengar", "Register number": "24MIA1042", "Phone number": 8369179576, "Username": "abhishek121206", "Member Type": "Core", "Meeting 2026-08-28": 0}, {"Name": "Prince predeep", "Register number": "24MIS1007", "Phone number": 8075327997, "Username": "Prince predeep", "Member Type": "Core", "Meeting 2026-08-28": 0}, {"Name": "HARITH S R", "Register number": "25BCE5179", "Phone number": 9482712848, "Username": "harithsr", "Member Type": "Core", "Meeting 2026-08-28": 0}, {"Name": "Giridar V.G", "Register number": "25BCE5162", "Phone number": 9500365662, "Username": "giridar_2007", "Member Type": "Core", "Meeting 2026-08-28": 0}, {"Name": "Aryan Jain ", "Register number": "25bce1910", "Phone number": 9840502912, "Username": "aryanvjain20", "Member Type": "Core", "Meeting 2026-08-28": 1}, {"Name": "U NAREN", "Register number": "25BDS1181", "Phone number": 9884198689, "Username": "naren_dev24k", "Member Type": "Core", "Meeting 2026-08-28": 0}, {"Name": "Subham kumar behera", "Register number": "24BCE5322", "Phone number": 7606996818, "Username": "biswa_pra_05", "Member Type": "Core", "Meeting 2026-08-28": 0}, {"Name": "Swati Prasad ", "Register number": "25BCE5589", "Phone number": 7013522537, "Username": "swatiprasad_26", "Member Type": "Core", "Meeting 2026-08-28": 0}, {"Name": "Sagnik Sen", "Register number": "24BCE5309", "Phone number": 9734187783, "Username": "sagnik_sen", "Member Type": "Core", "Meeting 2026-08-28": 0}, {"Name": "Aswin Bharathi M J", "Register number": "24MIS1080", "Phone number": 9361201097, "Username": "calm_foxes_49", "Member Type": "Core", "Meeting 2026-08-28": 0}, {"Name": "Joel Panjimaram Mathew ", "Register number": "24BAI1426 ", "Phone number": 9150943024, "Username": "worm_luck_27", "Member Type": "Core", "Meeting 2026-08-28": 0}, {"Name": "Sankari S", "Register number": "24MIS1079", "Phone number": 8637447960, "Username": "varsh_2025", "Member Type": "Core", "Meeting 2026-08-28": 1}, {"Name": "Anandha Poorana Thraya S S", "Register number": "25BCE1143", "Phone number": 9042769165, "Username": "apt_code_1903", "Member Type": "Core", "Meeting 2026-08-28": 0}]}};
+// If export_static.py hasn't injected real data yet, fall back to an empty
+// shell so the template still renders standalone for design review.
+if (typeof DASHBOARD_DATA === 'undefined') {
+  var DASHBOARD_DATA = { generatedAt:'', contestList:[], contestLabels:[], kpis:{}, members:[], meeting:{columns:[],records:[]} };
+}
+
+const state = {
+  cohort: 'All',
+  search: '',
+  sortKey: 'totalProblemsSolved',
+  sortDir: 'desc',
+};
+
+function fmtPct(n){ return (n===undefined||n===null) ? '—' : n + '%'; }
+
+function renderKpis(){
+  const k = DASHBOARD_DATA.kpis || {};
+  const top = k.overallTopPerformer;
+  const cards = [
+    { cls:'kpi-blue',   label:'Total Members',        value: k.totalMembers ?? 0,
+      sub: `${k.coreCount ?? 0} Core · ${k.ffcsCount ?? 0} FFCS` },
+    { cls:'kpi-green',  label:'Total Active Solvers',  value: k.totalActiveSolvers ?? 0,
+      sub: 'Members with ≥1 problem solved' },
+    { cls:'kpi-purple', label:'FFCS Turnout Rate',     value: fmtPct(k.ffcsTurnoutRate),
+      sub: `${k.ffcsCount ?? 0} FFCS students tracked` },
+    { cls:'kpi-amber',  label:'Core Turnout Rate',     value: fmtPct(k.coreTurnoutRate),
+      sub: `${k.coreCount ?? 0} Core members tracked` },
+    { cls:'kpi-blue',   label:'Contests Tracked',      value: k.contestsTracked ?? 0,
+      sub: (DASHBOARD_DATA.contestLabels || []).join(', ') || 'No contests yet' },
+    { cls:'kpi-green',  label:'Top Performer',         value: top ? top.name : '—',
+      sub: top ? `${top.solved} problems · ${top.memberType}` : 'No submissions yet' },
+  ];
+  document.getElementById('kpiGrid').innerHTML = cards.map(c => `
+    <div class="kpi-card ${c.cls}">
+      <div class="label">${c.label}</div>
+      <div class="value">${c.value}</div>
+      <div class="sub">${c.sub}</div>
+    </div>
+  `).join('');
+}
+
+function contestCols(){ return DASHBOARD_DATA.contestLabels || []; }
+
+function renderRosterHead(){
+  const cols = contestCols();
+  const headers = [
+    ['name','Name'], ['regNo','Reg. No'], ['codechefId','CodeChef ID'],
+    ['memberType','Type'], ['attendanceStatus','Status'],
+    ['contestsParticipated','Contests'], ['totalProblemsSolved','Problems Solved'],
+    ['attendanceRate','Attendance %'],
+  ];
+  let html = '<tr>';
+  headers.forEach(([key,label]) => {
+    const arrow = state.sortKey === key ? (state.sortDir==='asc'?'▲':'▼') : '';
+    html += `<th data-key="${key}">${label}<span class="arrow">${arrow}</span></th>`;
+  });
+  cols.forEach(c => html += `<th>${c}</th>`);
+  html += '</tr>';
+  document.getElementById('rosterHead').innerHTML = html;
+
+  document.querySelectorAll('#rosterHead th[data-key]').forEach(th => {
+    th.addEventListener('click', () => {
+      const key = th.dataset.key;
+      if (state.sortKey === key) {
+        state.sortDir = state.sortDir === 'asc' ? 'desc' : 'asc';
+      } else {
+        state.sortKey = key;
+        state.sortDir = ['name','memberType','attendanceStatus','codechefId','regNo'].includes(key) ? 'asc' : 'desc';
+      }
+      syncSortSelect();
+      renderRosterHead();
+      renderRosterBody();
+    });
+  });
+}
+
+function syncSortSelect(){
+  const sel = document.getElementById('sortSelect');
+  const value = `${state.sortKey}_${state.sortDir}`;
+  if ([...sel.options].some(o => o.value === value)) sel.value = value;
+}
+
+function getFilteredSortedMembers(){
+  let rows = (DASHBOARD_DATA.members || []).slice();
+
+  if (state.cohort !== 'All') {
+    rows = rows.filter(r => r.memberType === state.cohort);
+  }
+  if (state.search.trim()) {
+    const q = state.search.trim().toLowerCase();
+    rows = rows.filter(r =>
+      (r.name || '').toLowerCase().includes(q) ||
+      (String(r.regNo) || '').toLowerCase().includes(q)
+    );
+  }
+
+  const { sortKey, sortDir } = state;
+  rows.sort((a,b) => {
+    let av = a[sortKey], bv = b[sortKey];
+    if (typeof av === 'string') av = av.toLowerCase();
+    if (typeof bv === 'string') bv = bv.toLowerCase();
+    if (av < bv) return sortDir === 'asc' ? -1 : 1;
+    if (av > bv) return sortDir === 'asc' ? 1 : -1;
+    return 0;
+  });
+  return rows;
+}
+
+function renderRosterBody(){
+  const rows = getFilteredSortedMembers();
+  const cols = contestCols();
+  document.getElementById('rowCount').textContent = `${rows.length} member(s)`;
+
+  if (!rows.length) {
+    document.getElementById('rosterBody').innerHTML = '';
+    document.getElementById('rosterEmpty').style.display = 'block';
+    return;
+  }
+  document.getElementById('rosterEmpty').style.display = 'none';
+
+  document.getElementById('rosterBody').innerHTML = rows.map(r => {
+    const typePill = r.memberType === 'Core'
+      ? `<span class="pill pill-core">Core</span>`
+      : `<span class="pill pill-ffcs">FFCS</span>`;
+    const statusPill = r.attendanceStatus === 'Present'
+      ? `<span class="pill pill-present">Present</span>`
+      : `<span class="pill pill-absent">Absent</span>`;
+    const contestCells = cols.map(c => `<td>${(r.perContest && r.perContest[c]) || 0}</td>`).join('');
+    return `<tr>
+      <td>${r.name}</td>
+      <td>${r.regNo}</td>
+      <td>${r.codechefId}</td>
+      <td>${typePill}</td>
+      <td>${statusPill}</td>
+      <td>${r.contestsParticipated}</td>
+      <td>${r.totalProblemsSolved}</td>
+      <td>${r.attendanceRate}%</td>
+      ${contestCells}
+    </tr>`;
+  }).join('');
+}
+
+function renderMeeting(){
+  const meeting = DASHBOARD_DATA.meeting || {columns:[],records:[]};
+  if (!meeting.columns.length) return;
+  document.getElementById('meetingPanel').style.display = 'block';
+  document.getElementById('meetingHead').innerHTML =
+    '<tr>' + meeting.columns.map(c => `<th>${c}</th>`).join('') + '</tr>';
+  document.getElementById('meetingBody').innerHTML = meeting.records.map(rec =>
+    '<tr>' + meeting.columns.map(c => `<td>${rec[c] ?? ''}</td>`).join('') + '</tr>'
+  ).join('');
+}
+
+function init(){
+  document.getElementById('generatedBadge').textContent =
+    DASHBOARD_DATA.generatedAt ? `Last updated: ${DASHBOARD_DATA.generatedAt}` : 'Preview mode (no data)';
+
+  renderKpis();
+  renderRosterHead();
+  renderRosterBody();
+  renderMeeting();
+
+  document.querySelectorAll('#cohortTabs button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('#cohortTabs button').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      state.cohort = btn.dataset.cohort;
+      renderRosterBody();
+    });
+  });
+
+  document.getElementById('searchInput').addEventListener('input', (e) => {
+    state.search = e.target.value;
+    renderRosterBody();
+  });
+
+  document.getElementById('sortSelect').addEventListener('change', (e) => {
+    const [key, dir] = e.target.value.split('_');
+    state.sortKey = key;
+    state.sortDir = dir;
+    renderRosterHead();
+    renderRosterBody();
+  });
+}
+
+init();
+</script>
 </body>
 </html>

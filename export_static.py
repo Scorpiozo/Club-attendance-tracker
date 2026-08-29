@@ -1,111 +1,226 @@
-import pandas as pd
-import os
+from __future__ import annotations
 
-CP_EXCEL = "CP_Members.xlsx"
+import json
+import os
+import re
+from datetime import datetime
+
+import pandas as pd
+
+CORE_EXCEL = "CP_Members.xlsx"
+FFCS_EXCEL = "FFCS_Members.xlsx"
+
+FFCS_ROSTER_FALLBACK = "cccp202627.xlsx"  # raw Google Form export, no attendance yet
 MEETING_EXCEL = "Meeting_Attendance.xlsx"
+
+TEMPLATE_FILE = "index_template.html"
 OUTPUT_HTML = "index.html"
 
-def load_table_html(file_path: str) -> str:
-    if not os.path.exists(file_path):
-        return "<p class='text-amber-400 p-4'>File not generated yet.</p>"
-    
-    df = pd.read_excel(file_path)
+STARTER_COL_RE = re.compile(r"^Starters\s+(\d+)$")
+
+
+# --------------------------------------------------------------------------
+# Loading & standardizing
+# --------------------------------------------------------------------------
+
+def _starter_columns(df: pd.DataFrame) -> list[str]:
+    return [c for c in df.columns if STARTER_COL_RE.match(str(c))]
+
+
+def _pick(df_row: pd.Series, *candidates, default="N/A"):
+    for c in candidates:
+        if c in df_row.index and pd.notna(df_row[c]) and str(df_row[c]).strip():
+            return df_row[c]
+    return default
+
+
+def load_cohort(excel_file: str, member_type: str, fallback_roster: str | None = None) -> pd.DataFrame:
+    """Load a standardized cohort (Core or FFCS) member table. If the
+    processed attendance workbook doesn't exist yet, fall back to a raw
+    roster file (e.g. the Google Form export) so the dashboard still shows
+    the member list with zeroed-out stats rather than nothing at all."""
+    if os.path.exists(excel_file):
+        df = pd.read_excel(excel_file)
+    elif fallback_roster and os.path.exists(fallback_roster):
+        raw = pd.read_excel(fallback_roster)
+        cols = {str(c).lower(): c for c in raw.columns}
+        name_col = next((cols[k] for k in cols if "name" in k), None)
+        reg_col = next((cols[k] for k in cols if "reg" in k or "roll" in k), None)
+        user_col = next(
+            (cols[k] for k in cols if "codechef" in k or "username" in k or "handle" in k),
+            None,
+        )
+        df = pd.DataFrame({
+            "Name": raw[name_col] if name_col else "N/A",
+            "Register number": raw[reg_col] if reg_col else "N/A",
+            "Username": (raw[user_col].astype(str).str.strip().str.rstrip("/").str.split("/").str[-1]
+                         if user_col else "N/A"),
+        })
+    else:
+        return pd.DataFrame()
+
     if df.empty:
-        return "<p class='text-slate-400 p-4'>No data recorded.</p>"
-    
-    # Convert DataFrame to clean HTML table
-    return df.to_html(classes="display responsive nowrap w-full text-sm text-slate-200", index=False, border=0)
+        return df
 
-# Load data
-cp_table_html = load_table_html(CP_EXCEL)
-meeting_table_html = load_table_html(MEETING_EXCEL)
+    starter_cols = _starter_columns(df)
+    for c in starter_cols:
+        df[c] = pd.to_numeric(df[c], errors="coerce").fillna(0).astype(int)
 
-# Generate responsive HTML dashboard
-html_content = f"""<!DOCTYPE html>
-<html lang="en" class="dark">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Technical Department Dashboard</title>
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- DataTables CSS for Search & Sorting -->
-    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
-    <style>
-        body {{ background-color: #0f172a; color: #f8fafc; font-family: sans-serif; }}
-        .dataTables_wrapper {{ color: #94a3b8; font-size: 0.875rem; }}
-        table.dataTable tbody tr {{ background-color: #1e293b; color: #f8fafc; border-bottom: 1px solid #334155; }}
-        table.dataTable tbody tr:hover {{ background-color: #334155; }}
-        table.dataTable header th {{ background-color: #0f172a; color: #60a5fa; }}
-        .dataTables_wrapper .dataTables_length, .dataTables_wrapper .dataTables_filter, 
-        .dataTables_wrapper .dataTables_info, .dataTables_wrapper .dataTables_paginate {{ color: #94a3b8 !important; margin-bottom: 10px; }}
-        input, select {{ background-color: #1e293b !important; color: #f8fafc !important; border: 1px solid #475569 !important; border-radius: 6px; padding: 4px 8px; }}
-    </style>
-</head>
-<body class="p-6">
-    <div class="max-w-6xl mx-auto space-y-6">
-        <!-- Header -->
-        <header class="flex justify-between items-center bg-slate-800 p-6 rounded-xl border border-slate-700">
-            <div>
-                <h1 class="text-2xl font-bold text-blue-400">⚡ Technical Department Hub</h1>
-                <p class="text-xs text-slate-400">Live Attendance & Contest Performance (Read-Only)</p>
-            </div>
-        </header>
+    records = []
+    for _, row in df.iterrows():
+        name = _pick(row, "Name")
+        reg_no = _pick(row, "Registration Number", "Register number")
+        codechef_id = _pick(row, "CodeChef ID", "Username")
+        total_solved = int(sum(row[c] for c in starter_cols)) if starter_cols else 0
+        contests_participated = int(sum(1 for c in starter_cols if row[c] > 0)) if starter_cols else 0
+        attendance_rate = (
+            round(100 * contests_participated / len(starter_cols), 1) if starter_cols else 0.0
+        )
+        per_contest = {c: int(row[c]) for c in starter_cols}
 
-        <!-- Navigation Tabs -->
-        <div class="flex gap-4 border-b border-slate-700 pb-2">
-            <button onclick="switchTab('roster')" id="tab-roster-btn" class="px-4 py-2 font-semibold text-blue-400 border-b-2 border-blue-400">Member Roster & Contests</button>
-            <button onclick="switchTab('meeting')" id="tab-meeting-btn" class="px-4 py-2 font-semibold text-slate-400 hover:text-slate-200">Meeting Attendance</button>
-        </div>
+        records.append({
+            "name": str(name),
+            "regNo": str(reg_no),
+            "codechefId": str(codechef_id),
+            "memberType": member_type,
+            "attendanceStatus": "Present" if contests_participated > 0 else "Absent",
+            "totalProblemsSolved": total_solved,
+            "contestsParticipated": contests_participated,
+            "contestsTracked": len(starter_cols),
+            "attendanceRate": attendance_rate,
+            "perContest": per_contest,
+        })
 
-        <!-- Tab 1: CP Members -->
-        <div id="tab-roster" class="bg-slate-800 p-6 rounded-xl border border-slate-700">
-            <h2 class="text-lg font-bold text-slate-200 mb-4">CP Member & Contest Roster</h2>
-            <div class="overflow-x-auto">
-                {cp_table_html}
-            </div>
-        </div>
+    return pd.DataFrame(records)
 
-        <!-- Tab 2: Meetings -->
-        <div id="tab-meeting" class="bg-slate-800 p-6 rounded-xl border border-slate-700 hidden">
-            <h2 class="text-lg font-bold text-slate-200 mb-4">Meeting Attendance Logs</h2>
-            <div class="overflow-x-auto">
-                {meeting_table_html}
-            </div>
-        </div>
-    </div>
 
-    <!-- DataTables & Tab Switching JS -->
-    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
-    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
-    <script>
-        $(document).ready(function() {{
-            $('table').DataTable({{
-                responsive: true,
-                pageLength: 10,
-                lengthMenu: [10, 25, 50, 100]
-            }});
-        }});
+def build_dataset() -> dict:
+    core_df = load_cohort(CORE_EXCEL, "Core")
+    ffcs_df = load_cohort(FFCS_EXCEL, "FFCS", fallback_roster=FFCS_ROSTER_FALLBACK)
 
-        function switchTab(tab) {{
-            if (tab === 'roster') {{
-                $('#tab-roster').removeClass('hidden');
-                $('#tab-meeting').addClass('hidden');
-                $('#tab-roster-btn').addClass('text-blue-400 border-b-2 border-blue-400').removeClass('text-slate-400');
-                $('#tab-meeting-btn').removeClass('text-blue-400 border-b-2 border-blue-400').addClass('text-slate-400');
-            }} else {{
-                $('#tab-meeting').removeClass('hidden');
-                $('#tab-roster').addClass('hidden');
-                $('#tab-meeting-btn').addClass('text-blue-400 border-b-2 border-blue-400').removeClass('text-slate-400');
-                $('#tab-roster-btn').removeClass('text-blue-400 border-b-2 border-blue-400').addClass('text-slate-400');
-            }}
-        }}
-    </script>
-</body>
-</html>
-"""
+    all_df = pd.concat([core_df, ffcs_df], ignore_index=True) if not (core_df.empty and ffcs_df.empty) else pd.DataFrame()
 
-with open(OUTPUT_HTML, "w", encoding="utf-8") as f:
-    f.write(html_content)
+    # Union of every "Starters N" contest tracked across both cohorts, sorted.
+    contest_numbers: set[int] = set()
+    for df in (core_df, ffcs_df):
+        if df.empty:
+            continue
+        for rec in df["perContest"]:
+            for k in rec.keys():
+                m = STARTER_COL_RE.match(k)
+                if m:
+                    contest_numbers.add(int(m.group(1)))
+    contest_list = sorted(contest_numbers)
+    contest_labels = [f"Starters {n}" for n in contest_list]
 
-print(f"✅ Generated static dashboard at '{OUTPUT_HTML}' successfully!")
+    # ---- KPIs -------------------------------------------------------
+    total_members = len(all_df)
+    total_active_solvers = int((all_df["totalProblemsSolved"] > 0).sum()) if not all_df.empty else 0
+
+    ffcs_count = len(ffcs_df)
+    ffcs_active = int((ffcs_df["attendanceStatus"] == "Present").sum()) if not ffcs_df.empty else 0
+    ffcs_turnout_rate = round(100 * ffcs_active / ffcs_count, 1) if ffcs_count else 0.0
+
+    core_count = len(core_df)
+    core_active = int((core_df["attendanceStatus"] == "Present").sum()) if not core_df.empty else 0
+    core_turnout_rate = round(100 * core_active / core_count, 1) if core_count else 0.0
+
+    top_performers = {}
+    for label in contest_labels:
+        if all_df.empty:
+            continue
+        col_vals = all_df["perContest"].apply(lambda d: d.get(label, 0))
+        max_val = col_vals.max() if len(col_vals) else 0
+        if max_val > 0:
+            best_idx = col_vals.idxmax()
+            top_performers[label] = {
+                "name": all_df.loc[best_idx, "name"],
+                "memberType": all_df.loc[best_idx, "memberType"],
+                "solved": int(col_vals.max()),
+            }
+
+    overall_top_performer = None
+    if not all_df.empty and all_df["totalProblemsSolved"].max() > 0:
+        idx = all_df["totalProblemsSolved"].idxmax()
+        overall_top_performer = {
+            "name": all_df.loc[idx, "name"],
+            "memberType": all_df.loc[idx, "memberType"],
+            "solved": int(all_df.loc[idx, "totalProblemsSolved"]),
+        }
+
+    kpis = {
+        "totalMembers": total_members,
+        "totalActiveSolvers": total_active_solvers,
+        "coreCount": core_count,
+        "coreTurnoutRate": core_turnout_rate,
+        "ffcsCount": ffcs_count,
+        "ffcsTurnoutRate": ffcs_turnout_rate,
+        "contestsTracked": len(contest_list),
+        "overallTopPerformer": overall_top_performer,
+        "topPerformersByContest": top_performers,
+    }
+
+    members = json.loads(all_df.to_json(orient="records")) if not all_df.empty else []
+
+    # Meeting attendance (kept from the legacy dashboard, if present).
+    meeting_records = []
+    meeting_columns: list[str] = []
+    if os.path.exists(MEETING_EXCEL):
+        m_df = pd.read_excel(MEETING_EXCEL)
+        if not m_df.empty:
+            meeting_columns = list(m_df.columns)
+            meeting_records = json.loads(m_df.to_json(orient="records"))
+
+    return {
+        "generatedAt": datetime.now().isoformat(timespec="seconds"),
+        "contestList": contest_list,
+        "contestLabels": contest_labels,
+        "kpis": kpis,
+        "members": members,
+        "meeting": {
+            "columns": meeting_columns,
+            "records": meeting_records,
+        },
+    }
+
+
+# --------------------------------------------------------------------------
+# HTML compilation
+# --------------------------------------------------------------------------
+
+def compile_html(dataset: dict) -> str:
+    if not os.path.exists(TEMPLATE_FILE):
+        raise FileNotFoundError(
+            f"{TEMPLATE_FILE} not found. Keep index_template.html next to export_static.py; "
+            f"it is the static UI shell that this script injects data into."
+        )
+
+    with open(TEMPLATE_FILE, "r", encoding="utf-8") as f:
+        template = f.read()
+
+    payload_json = json.dumps(dataset, ensure_ascii=False)
+    # Embed as a JSON literal inside a <script> tag so the page has zero
+    # runtime network dependency for its data.
+    injected = template.replace(
+        "/*__DASHBOARD_DATA__*/",
+        f"const DASHBOARD_DATA = {payload_json};",
+    )
+    return injected
+
+
+def main():
+    dataset = build_dataset()
+    html = compile_html(dataset)
+
+    with open(OUTPUT_HTML, "w", encoding="utf-8") as f:
+        f.write(html)
+
+    print(f"✅ Generated static dashboard at '{OUTPUT_HTML}'")
+    print(f"   Core members:  {dataset['kpis']['coreCount']}")
+    print(f"   FFCS members:  {dataset['kpis']['ffcsCount']}")
+    print(f"   Contests tracked: {dataset['kpis']['contestsTracked']}")
+    print(f"   Total active solvers: {dataset['kpis']['totalActiveSolvers']}")
+
+
+if __name__ == "__main__":
+    main()
