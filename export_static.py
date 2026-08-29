@@ -35,10 +35,6 @@ def _pick(df_row: pd.Series, *candidates, default="N/A"):
 
 
 def load_cohort(excel_file: str, member_type: str, fallback_roster: str | None = None) -> pd.DataFrame:
-    """Load a standardized cohort (Core or FFCS) member table. If the
-    processed attendance workbook doesn't exist yet, fall back to a raw
-    roster file (e.g. the Google Form export) so the dashboard still shows
-    the member list with zeroed-out stats rather than nothing at all."""
     if os.path.exists(excel_file):
         df = pd.read_excel(excel_file)
     elif fallback_roster and os.path.exists(fallback_roster):
