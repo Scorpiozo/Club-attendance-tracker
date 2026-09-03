@@ -5,6 +5,7 @@ import re
 import sys
 import time
 import os
+from urllib.parse import quote
 from pprint import pprint
 from urllib.request import Request, urlopen
 from urllib.error import URLError, HTTPError
@@ -78,6 +79,11 @@ RE_STARTERS_HEADER = re.compile(
     re.IGNORECASE,
 )
 
+RE_RATED_STARTERS = re.compile(
+    r"[\"']code[\"']\s*:\s*[\"']START(\d+)[A-Z0-9]*[\"']",
+    re.IGNORECASE,
+)
+
 # A "junk" line inside a problem segment that should never be treated as a
 # problem name (stray labels CodeChef sometimes leaves in the flattened text).
 RE_JUNK_LINE = re.compile(
@@ -94,7 +100,7 @@ DEFAULT_RATE_LIMIT_SECONDS = 0.5  # min gap enforced inside fetch_html itself
 # --------------------------------------------------------------------------
 
 def build_user_url(handle: str) -> str:
-    return f"https://www.codechef.com/users/{handle}"
+    return f"https://www.codechef.com/users/{quote(str(handle).strip(), safe='')}"
 
 
 def fetch_html(url: str, timeout: int = 15, max_retries: int = 4,
@@ -231,10 +237,31 @@ def parse_starters(contest_text: str) -> dict[int, list[str]]:
 
 
 def get_user_contests(handle: str) -> dict[int, list[str]]:
-    url = build_user_url(handle)
-    html = fetch_html(url)
-    contest_text, _ = extract_contest_text(html)
-    return parse_starters(contest_text)
+    contests, _, _ = get_user_contest_data(handle)
+    return contests
+
+
+def get_user_contest_data(
+    handle: str,
+) -> tuple[dict[int, list[str]], set[int], bool]:
+    """Return solved problems, entered contests, and whether the page loaded."""
+    if not handle or handle.strip().casefold() in {"nan", "n/a", "none"}:
+        return {}, set(), False
+
+    html = fetch_html(build_user_url(handle))
+    if not html:
+        return {}, set(), False
+
+    contest_text, expected = extract_contest_text(html)
+    if expected < 0:
+        return {}, set(), False
+
+    solved = parse_starters(contest_text)
+    entered = {
+        int(match.group(1))
+        for match in RE_RATED_STARTERS.finditer(html)
+    }
+    return solved, entered, True
 
 
 # --------------------------------------------------------------------------
@@ -348,7 +375,9 @@ def fetch_single_user(handle: str, starter_num: int) -> int:
     if not handle or handle.lower() == "nan":
         return 0
     try:
-        contests = get_user_contests(handle)
+        contests, _, loaded = get_user_contest_data(handle)
+        if not loaded:
+            return 0
         return len(contests.get(starter_num, []))
     except Exception as e:  # noqa: BLE001 - one bad profile must not kill the batch
         print(f"⚠️  Error processing @{handle}: {e}", file=sys.stderr)
@@ -382,9 +411,25 @@ def process_attendance(
     print(f"\n🚀 Starting sequential scrape for {total} {member_type} members (Starters {starter_num})...")
 
     for completed, (idx, handle) in enumerate(enumerate(handles), start=1):
-        count = fetch_single_user(handle, starter_num)
+        try:
+            solved_contests, entered_contests, loaded = get_user_contest_data(handle)
+        except Exception as e:  # noqa: BLE001 - one bad profile must not kill the batch
+            print(f"⚠️  Error processing @{handle}: {e}", file=sys.stderr)
+            solved_contests, entered_contests, loaded = {}, set(), False
+
+        if not loaded:
+            print(f"⚠️  Skipping @{handle}: profile could not be verified.", file=sys.stderr)
+            if on_progress:
+                on_progress(completed, total, handle, None)
+            else:
+                print(f"[{completed}/{total}] ⚠️ @{handle}: unchanged (profile unavailable)")
+            continue
+
+        count = len(solved_contests.get(starter_num, []))
         members_table.loc[idx, col_name] = int(count)
-        members_table.loc[idx, "Attendance Status"] = "Present" if count > 0 else "Absent"
+        members_table.loc[idx, "Attendance Status"] = (
+            "Present" if starter_num in entered_contests else "Absent"
+        )
 
         if on_progress:
             on_progress(completed, total, handle, count)

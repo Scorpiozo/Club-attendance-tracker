@@ -54,5 +54,10 @@ number and a specific set of following headers. The parser now:
   comes next.
 - Strips arbitrary division/rating noise — `(Div 3)`, `(Division 4)`,
   `(Rated for Div 3 & 4)`, etc. — without needing to enumerate every phrasing.
+- Does not replace an existing value when CodeChef is unavailable or the
+   profile response cannot be verified; the member is reported as skipped.
+- Uses CodeChef's embedded contest history to distinguish participation from
+   solved-problem count, so a participant who solved zero problems is not
+   incorrectly treated as absent.
 - Falls back gracefully (empty list, not a crash) on any unexpected page
   layout or network failure.

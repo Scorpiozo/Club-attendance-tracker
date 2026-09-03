@@ -284,9 +284,13 @@ def main_page():
                                 if kind == 'progress':
                                     completed, total, handle, count = a, b, c, d
                                     progress_bar.set_value(completed / total if total else 0)
-                                    progress_label.set_text(f'{completed}/{total} — @{handle}: {count} solved')
-                                    icon = '✅' if count > 0 else '➖'
-                                    log_area.push(f'[{completed}/{total}] {icon} @{handle}: {count} problem(s) solved')
+                                    if count is None:
+                                        progress_label.set_text(f'{completed}/{total} — @{handle}: unavailable, unchanged')
+                                        log_area.push(f'[{completed}/{total}] ⚠️ @{handle}: unavailable, unchanged')
+                                    else:
+                                        progress_label.set_text(f'{completed}/{total} — @{handle}: {count} solved')
+                                        icon = '✅' if count > 0 else '➖'
+                                        log_area.push(f'[{completed}/{total}] {icon} @{handle}: {count} problem(s) solved')
                                 elif kind == 'done':
                                     progress_label.set_text(f'✅ Done! Updated {excel_file}.')
                                     log_area.push(f'🎉 Finished scraping Starters {starter_num} for {cohort}.')
