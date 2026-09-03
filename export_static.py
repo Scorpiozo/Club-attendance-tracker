@@ -587,6 +587,24 @@ def build_dataset() -> dict:
             ),
         }
 
+    leaderboard = []
+    if not all_df.empty:
+        ranked = all_df.sort_values(
+            by=["totalProblemsSolved", "contestsParticipated", "name"],
+            ascending=[False, False, True],
+        ).head(3)
+        leaderboard = [
+            {
+                "rank": rank,
+                "name": str(row["name"]),
+                "memberType": str(row["memberType"]),
+                "contestsParticipated": int(row["contestsParticipated"]),
+                "solved": int(row["totalProblemsSolved"]),
+            }
+            for rank, (_, row) in enumerate(ranked.iterrows(), start=1)
+            if int(row["totalProblemsSolved"]) > 0
+        ]
+
     # -----------------------------------------------------------------------
     # KPI object
     # -----------------------------------------------------------------------
@@ -606,6 +624,8 @@ def build_dataset() -> dict:
         "overallTopPerformer": overall_top_performer,
 
         "topPerformersByContest": top_performers,
+
+        "leaderboard": leaderboard,
     }
 
     # -----------------------------------------------------------------------

@@ -150,6 +150,47 @@
             color: var(--amber);
         }
 
+        .leaderboard-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 12px;
+        }
+
+        .leaderboard-item {
+            display: grid;
+            grid-template-columns: 34px minmax(0, 1fr);
+            gap: 12px;
+            align-items: center;
+            background: var(--panel-2);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 12px;
+        }
+
+        .leaderboard-rank {
+            color: var(--amber);
+            font-size: 1.25rem;
+            font-weight: 800;
+            text-align: center;
+        }
+
+        .leaderboard-name {
+            font-weight: 700;
+            overflow-wrap: anywhere;
+        }
+
+        .leaderboard-meta {
+            color: var(--muted);
+            font-size: 0.75rem;
+            margin-top: 4px;
+        }
+
+        @media (max-width: 720px) {
+            .leaderboard-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
         /* ------------------------------------------------------------------
            Cohort tabs
         ------------------------------------------------------------------ */
@@ -457,6 +498,11 @@
         id="kpiGrid"
     ></div>
 
+    <section class="panel" id="leaderboardPanel">
+        <h2>Top 3 Leaderboard</h2>
+        <div class="leaderboard-grid" id="leaderboardGrid"></div>
+    </section>
+
 
     <!-- ================================================================
          Cohort tabs
@@ -727,6 +773,31 @@ function renderKpis() {
             </div>
 
         `).join("");
+}
+
+
+function renderLeaderboard() {
+
+    const leaderboard = DASHBOARD_DATA.kpis?.leaderboard || [];
+    const container = document.getElementById("leaderboardGrid");
+    const panel = document.getElementById("leaderboardPanel");
+
+    if (!leaderboard.length) {
+        panel.style.display = "none";
+        return;
+    }
+
+    container.innerHTML = leaderboard.map(entry => `
+        <div class="leaderboard-item">
+            <div class="leaderboard-rank">#${entry.rank}</div>
+            <div>
+                <div class="leaderboard-name">${escapeHtml(entry.name)}</div>
+                <div class="leaderboard-meta">
+                    ${escapeHtml(entry.memberType)} · ${entry.solved} solved · ${entry.contestsParticipated} contests
+                </div>
+            </div>
+        </div>
+    `).join("");
 }
 
 
@@ -1265,6 +1336,8 @@ function init() {
 
 
     renderKpis();
+
+    renderLeaderboard();
 
     renderRosterHead();
 
