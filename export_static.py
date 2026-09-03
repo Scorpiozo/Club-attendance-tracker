@@ -224,6 +224,11 @@ def load_cohort(
             ]
         )
 
+        phone_col = find_column(
+            raw,
+            ["phone number", "phone", "mobile number", "mobile", "contact"],
+        )
+
         df = pd.DataFrame({
             "Name": (
                 raw[name_col]
@@ -233,6 +238,11 @@ def load_cohort(
             "Register number": (
                 raw[reg_col]
                 if reg_col is not None
+                else ["N/A"] * len(raw)
+            ),
+            "Phone number": (
+                raw[phone_col]
+                if phone_col is not None
                 else ["N/A"] * len(raw)
             ),
             "Username": (
@@ -305,6 +315,20 @@ def load_cohort(
             )
         )
 
+        phone_number = clean_text(
+            pick(
+                row,
+                "Phone number",
+                "Phone Number",
+                "Phone",
+                "Mobile number",
+                "Mobile Number",
+                "Mobile",
+                "Contact",
+                default="N/A",
+            )
+        )
+
         codechef_id = clean_username(
             pick(
                 row,
@@ -355,6 +379,7 @@ def load_cohort(
         records.append({
             "name": name,
             "regNo": reg_no,
+            "phoneNumber": phone_number,
             "codechefId": codechef_id,
             "memberType": member_type,
             "attendanceStatus": attendance_status,

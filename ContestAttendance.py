@@ -33,6 +33,7 @@ TOTAL_PROBLEMS_LABEL = "Total Problems Solved"
 STANDARD_COLUMNS = [
     "Name",
     "Registration Number",
+    "Phone number",
     "CodeChef ID",
     "Member Type",
     "Attendance Status",

@@ -742,6 +742,7 @@ function renderRosterHead() {
 
         ["name", "Name"],
         ["regNo", "Reg. No"],
+        ["phoneNumber", "Phone"],
         ["codechefId", "CodeChef ID"],
         ["memberType", "Type"],
         ["attendanceStatus", "Status"],
@@ -1062,6 +1063,10 @@ function renderRosterBody() {
 
                     <td>
                         ${escapeHtml(row.regNo)}
+                    </td>
+
+                    <td>
+                        ${escapeHtml(row.phoneNumber)}
                     </td>
 
                     <td>
