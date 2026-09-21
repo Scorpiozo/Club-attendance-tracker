@@ -30,12 +30,15 @@ CONTESTS_LABEL = "Contests"
 CONTESTS_PARTICIPATED_LABEL = "Contests Participated"
 TOTAL_PROBLEMS_LABEL = "Total Problems Solved"
 
-# Canonical output columns shared by both cohorts.
+# Canonical output columns shared by both cohorts. "Register number" and
+# "CodeChef ID" used to also exist as separate alias columns duplicating
+# "Registration Number" and "Username" respectively -- same data, two
+# columns. They're consolidated now; only the canonical name is kept.
 STANDARD_COLUMNS = [
     "Name",
     "Registration Number",
     "Phone number",
-    "CodeChef ID",
+    "Username",
     "Member Type",
     "Batch",
     "Attendance Status",
@@ -273,23 +276,104 @@ def get_user_contest_data(
 # Data Initialization
 # --------------------------------------------------------------------------
 
-def _standardize_frame(df: pd.DataFrame, member_type: str) -> pd.DataFrame:
-    """Ensure a member roster dataframe has all STANDARD_COLUMNS plus the
-    legacy columns other tools in this project expect (Name, Register
-    number, Phone number, Username), without clobbering any existing
-    'Starters N' attendance columns."""
+def _normalize_columns(df: pd.DataFrame) -> pd.DataFrame:
+    """Clean up roster headers before anything else looks at them.
+
+    Excel round-trips and manual edits routinely introduce header variants
+    that are invisible to the eye but distinct to pandas -- "Username " with
+    a trailing space, or "Starters  247" with a double space. Previously
+    those slipped through, so _standardize_frame saw no "Username" column
+    and helpfully created a second one, and each spacing variant of a
+    contest became its own column. That is the source of the duplicate
+    columns appearing in the roster file after a scrape.
+
+    This collapses whitespace in every header, canonicalizes "Starters N"
+    spacing/casing, and merges any resulting duplicates (first non-empty
+    value wins) so exactly one column survives per logical field.
+    """
     out = df.copy()
 
-    # Legacy columns used elsewhere in the pipeline (app.py, ContestAttendance)
-    for col in ["Name", "Register number", "Phone number", "Username"]:
+    cleaned = []
+    for col in out.columns:
+        name = re.sub(r"\s+", " ", str(col)).strip()
+        starter = re.match(r"^starters\s*(\d+)$", name, flags=re.IGNORECASE)
+        if starter:
+            name = f"Starters {int(starter.group(1))}"
+        cleaned.append(name)
+    out.columns = cleaned
+
+    if len(set(cleaned)) != len(cleaned):
+        merged = {}
+        for name in dict.fromkeys(cleaned):          # preserve original order
+            block = out.loc[:, [c == name for c in out.columns]]
+            if block.shape[1] == 1:
+                merged[name] = block.iloc[:, 0]
+            else:
+                # Combine left-to-right: the first column that actually has a
+                # value for a row wins, so no scraped data is silently lost.
+                series = block.iloc[:, 0]
+                for i in range(1, block.shape[1]):
+                    series = series.combine_first(block.iloc[:, i])
+                merged[name] = series
+        out = pd.DataFrame(merged, index=out.index)
+
+    return out
+
+
+# Legacy column name -> canonical name. "Register number" and
+# "Registration Number" are the same field; so are "CodeChef ID" and
+# "Username". Older files/code paths used the legacy names -- this merges
+# them into one column instead of keeping both in sync as aliases.
+_LEGACY_COLUMN_ALIASES = {
+    "Register number": "Registration Number",
+    "CodeChef ID": "Username",
+}
+
+
+def _consolidate_alias_columns(df: pd.DataFrame) -> pd.DataFrame:
+    """Merge legacy alias columns (see _LEGACY_COLUMN_ALIASES) into their
+    canonical column, first non-empty value wins, then drop the legacy
+    column so it doesn't keep reappearing as a duplicate."""
+    out = df.copy()
+    for legacy, canonical in _LEGACY_COLUMN_ALIASES.items():
+        if legacy not in out.columns:
+            continue
+        if canonical in out.columns:
+            out[canonical] = out[canonical].combine_first(out[legacy])
+        else:
+            out[canonical] = out[legacy]
+        out = out.drop(columns=[legacy])
+    return out
+
+
+def _order_columns(df: pd.DataFrame) -> pd.DataFrame:
+    """Keep roster columns in a stable, readable order: identity fields
+    first, then aggregates, then every 'Starters N' column in numeric
+    order (rather than whatever order rounds happened to be scraped in)."""
+    starter_cols = sorted(
+        (c for c in df.columns if re.match(r"^Starters\s+\d+$", str(c))),
+        key=lambda c: int(re.findall(r"\d+", str(c))[0]),
+    )
+    preferred = [
+        "Name", "Registration Number", "Phone number", "Username",
+        "Member Type", "Batch",
+        "Attendance Status", "Total Problems Solved", "Contests Participated",
+    ]
+    head = [c for c in preferred if c in df.columns]
+    rest = [c for c in df.columns if c not in head and c not in starter_cols]
+    return df[head + rest + starter_cols]
+
+
+def _standardize_frame(df: pd.DataFrame, member_type: str) -> pd.DataFrame:
+    """Ensure a member roster dataframe has all STANDARD_COLUMNS, without
+    clobbering any existing 'Starters N' attendance columns."""
+    out = _normalize_columns(df)
+    out = _consolidate_alias_columns(out)
+
+    for col in ["Name", "Registration Number", "Phone number", "Username"]:
         if col not in out.columns:
             out[col] = "N/A"
 
-    # New standardized columns requested for the FFCS/Core tracking feature.
-    if "Registration Number" not in out.columns:
-        out["Registration Number"] = out["Register number"]
-    if "CodeChef ID" not in out.columns:
-        out["CodeChef ID"] = out["Username"]
     if "Member Type" not in out.columns:
         out["Member Type"] = member_type
     else:
@@ -326,7 +410,7 @@ def _import_from_gform(path: str) -> pd.DataFrame | None:
     )
 
     df["Name"] = raw_df[name_col] if name_col else "N/A"
-    df["Register number"] = raw_df[reg_col] if reg_col else "N/A"
+    df["Registration Number"] = raw_df[reg_col] if reg_col else "N/A"
     df["Phone number"] = raw_df[phone_col] if phone_col else "N/A"
 
     if user_col:
@@ -361,7 +445,7 @@ def initialize_member_dataframe(excel_file: str, member_type: str) -> pd.DataFra
             handles = [line.strip() for line in f if line.strip()]
         df = pd.DataFrame({
             "Name": ["N/A"] * len(handles),
-            "Register number": ["N/A"] * len(handles),
+            "Registration Number": ["N/A"] * len(handles),
             "Phone number": ["N/A"] * len(handles),
             "Username": handles,
         })
@@ -463,6 +547,9 @@ def process_attendance(
         lambda row: sum(1 for v in row if pd.notna(v) and int(v) > 0), axis=1
     )
 
+    # Write back with a stable column order and no duplicate/whitespace
+    # header variants, so repeated scrapes keep the file clean.
+    members_table = _order_columns(members_table)
     members_table.to_excel(excel_file, index=False)
     print(f"\n🎉 Success! Updated {excel_file} with column '{col_name}'.")
     return members_table

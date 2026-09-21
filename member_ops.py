@@ -35,11 +35,12 @@ REVIEW_EXCEL_FILE = "Review_Records.xlsx"
 
 COHORT_FILES = {"Core": CORE_EXCEL_FILE, "FFCS": FFCS_EXCEL_FILE}
 
-# Canonical roster columns every cohort file should carry.
+# Canonical roster columns every cohort file should carry. "Register
+# number" and "CodeChef ID" used to be kept as separate alias columns
+# duplicating "Registration Number" and "Username" -- consolidated now.
 ROSTER_COLUMNS = [
-    "Name", "Register number", "Phone number", "Username",
-    "Registration Number", "CodeChef ID", "Member Type", "Batch",
-    "Attendance Status",
+    "Name", "Registration Number", "Phone number", "Username",
+    "Member Type", "Batch", "Attendance Status",
 ]
 
 # Fields the bulk-import mapping step asks about. Batch is deliberately
@@ -96,9 +97,9 @@ def load_meeting_data() -> pd.DataFrame:
     if os.path.exists(MEETING_EXCEL_FILE):
         return pd.read_excel(MEETING_EXCEL_FILE)
     df_all = load_all_members()
-    base_cols = [c for c in ["Name", "Register number", "Phone number", "Username", "Member Type"] if c in df_all.columns]
+    base_cols = [c for c in ["Name", "Registration Number", "Phone number", "Username", "Member Type"] if c in df_all.columns]
     return df_all[base_cols].copy() if not df_all.empty else pd.DataFrame(
-        columns=["Name", "Register number", "Phone number", "Username", "Member Type"]
+        columns=["Name", "Registration Number", "Phone number", "Username", "Member Type"]
     )
 
 
@@ -115,7 +116,7 @@ def _sync_meeting_sheet_add(new_rows: pd.DataFrame) -> None:
     that actually have a value for that member."""
     m_df = load_meeting_data()
     cols = meeting_columns(m_df)
-    add_rows = new_rows[["Name", "Register number", "Phone number", "Username", "Member Type"]].copy()
+    add_rows = new_rows[["Name", "Registration Number", "Phone number", "Username", "Member Type"]].copy()
     for c in cols:
         add_rows[c] = pd.NA
     if m_df.empty:
@@ -264,11 +265,9 @@ def add_single_member(
 
     new_row = {
         "Name": name.strip(),
-        "Register number": reg,
+        "Registration Number": reg,
         "Phone number": str(phone).strip() or "N/A",
         "Username": handle or "N/A",
-        "Registration Number": reg,
-        "CodeChef ID": handle or "N/A",
         "Member Type": member_type,
         "Batch": batch.strip() or ca.DEFAULT_BATCH_LABEL,
         "Attendance Status": "Unknown",
@@ -310,18 +309,16 @@ def guess_column_mapping(raw_df: pd.DataFrame) -> dict[str, str | None]:
 
 def apply_mapping(raw_df: pd.DataFrame, mapping: dict[str, str], member_type: str, batch: str) -> pd.DataFrame:
     """Build a standardized roster dataframe from raw_df using a confirmed
-    (possibly user-adjusted) column mapping."""
+    (possibly user-adjusted) column mapping. IMPORT_TARGET_FIELDS uses
+    "CodeChef ID" only as the user-facing label for this mapping step;
+    the resulting column is the canonical "Username"."""
     out = pd.DataFrame()
     for field in IMPORT_TARGET_FIELDS:
         src = mapping.get(field)
         out[field] = raw_df[src].astype(str).str.strip() if src and src in raw_df.columns else "N/A"
 
-    out = out.rename(columns={
-        "Registration Number": "Registration Number",
-        "CodeChef ID": "CodeChef ID",
-    })
-    out["Register number"] = out["Registration Number"]
-    out["Username"] = out["CodeChef ID"].str.rstrip("/").str.split("/").str[-1]
+    out = out.rename(columns={"CodeChef ID": "Username"})
+    out["Username"] = out["Username"].str.rstrip("/").str.split("/").str[-1]
     out["Member Type"] = member_type
     out["Batch"] = batch.strip() or ca.DEFAULT_BATCH_LABEL
     out["Attendance Status"] = "Unknown"
