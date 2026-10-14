@@ -91,7 +91,7 @@ def main_page():
             --text-muted: #667487;
 
             --blue: #3b82f6;
-            --blue-bright: #60a5fa;
+            --blue-bright: #2b97fb;
             --cyan: #22d3ee;
 
             --green: #22c55e;
